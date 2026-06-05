@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.pyc
+build/
+dist/
+*.egg-info/
+.pytest_cache/
+
+# Node / TypeScript
+node_modules/
+typescript/dist/
+*.tsbuildinfo
+
+# OS
+.DS_Store

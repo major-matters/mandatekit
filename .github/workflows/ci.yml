@@ -1,0 +1,44 @@
+# CI for MandateKit. Lives under mandatekit/ so it sits at the repo root once the
+# package is extracted into its own public repository. It does not auto-run while
+# mandatekit/ is nested inside the major-labs monorepo (GitHub only runs workflows
+# from the repo-root .github/workflows/).
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  python:
+    name: Python ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Tests (dependency-free core)
+        working-directory: python
+        run: PYTHONPATH=. python tests/test_mandatekit.py
+
+  typescript:
+    name: TypeScript (Node 22)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install dev deps
+        working-directory: typescript
+        run: npm install --no-audit --no-fund
+      - name: Build (type-check + emit dist + types)
+        working-directory: typescript
+        run: npm run build
+      - name: Tests
+        working-directory: typescript
+        run: npm test

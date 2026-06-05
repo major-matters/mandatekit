@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mandatekit"
+version = "0.0.1"
+description = "Sign and verify scope-bound mandates for AI agents. v0, tracks the AP2 Verifiable Intent draft."
+readme = "README.md"
+requires-python = ">=3.8"
+license = { text = "MIT" }
+authors = [{ name = "Major Labs" }]
+keywords = ["ai-agents", "ap2", "mandate", "verifiable-intent", "payments", "ed25519"]
+dependencies = []  # the core is dependency-free (pure-Python Ed25519)
+
+[project.optional-dependencies]
+# Off-the-shelf LLM parsing / intent scoring. Not required for the core.
+llm = ["anthropic>=0.40"]
+
+[project.urls]
+Homepage = "https://majorlabs.co"
+
+[project.scripts]
+mandatekit = "mandatekit.cli:main"
+
+[tool.setuptools]
+packages = ["mandatekit"]
+
+[tool.setuptools.package-data]
+mandatekit = ["py.typed"]

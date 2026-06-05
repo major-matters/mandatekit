@@ -1,0 +1,124 @@
+# MandateKit · v0
+
+[![CI](https://github.com/major-matters/mandatekit/actions/workflows/ci.yml/badge.svg)](https://github.com/major-matters/mandatekit/actions/workflows/ci.yml)
+
+> ⚠️ **Experimental — unaudited, not for production.** A v0 research prototype with
+> no third-party security audit. **Do not use it to authorize real funds.** Not yet
+> published to npm or PyPI — install from source. The API and on-the-wire format
+> will change.
+
+**Sign and verify scope-bound mandates for AI agents.**
+
+When an AI agent acts on someone's behalf — buys something, books something, pays
+for something — the hard question is *was it allowed to do that?* A **mandate** is
+the answer in signed, machine-checkable form: a small document that says exactly
+what an agent may spend on, who issued it, and when it expires. Before a
+transaction clears, you verify it against the mandate and get a yes/no with a
+reason.
+
+MandateKit is the open-source SDK for producing and checking those mandates. It
+ships in **Python** and **TypeScript**, with byte-compatible signatures across the
+two (a mandate signed in one verifies in the other).
+
+> **v0 status.** This tracks the [AP2](https://github.com/google-agentic-commerce/AP2)
+> Verifiable Intent **draft** (finalization expected Q3 2026). Field names and
+> scoring are MandateKit's own until the spec settles. Treat it as a working
+> prototype, not a stable API — expect breaking changes.
+
+## The two pieces
+
+### 1. The compiler — natural language → signed mandate
+
+```
+"Allow this agent to buy running shoes from any apparel retailer
+ up to $500 per transaction, expires June 30"
+```
+
+becomes
+
+```
+natural language  →  JSON-Schema mandate  →  Ed25519-signed payload
+```
+
+Parsing has two modes: a **deterministic rule-based parser** (default, zero
+dependencies, no network) and an **off-the-shelf LLM parser** you inject for
+free-form phrasing. Signing is always **local** — the private key never leaves
+the device.
+
+### 2. The verifier — deterministic scope check
+
+Given a signed mandate and a candidate transaction, it returns a verdict:
+
+```json
+{
+  "decision": "allow",
+  "signature_valid": true,
+  "scope_match_score": 1.0,
+  "matched": [ ... ],
+  "failed": [],
+  "rationale": "in scope: within validity window; apparel in [apparel]; 240 USD <= cap 500 USD"
+}
+```
+
+It checks signature, expiry, category, merchant allow/deny, and amount cap —
+**deterministically**: same inputs, same verdict, every time. The one fuzzy check,
+intent-basket alignment ("do running shoes satisfy the stated intent?"), is
+**optional and injected**; a missing or failing model never turns a deny into an
+allow.
+
+## Security model
+
+A valid signature proves **integrity, not authority**: that the mandate was not
+altered and that whoever holds the key signed it — not that you trust that key.
+So `verify()` requires you to **pin the issuer** with `trusted_keys` / `trustedKeys`,
+and **fails closed** (denies) if you supply neither that nor an explicit
+`allow_unverified_issuer` opt-in. It also denies unbounded mandates (no scope),
+empty allow-lists, and unknown constraint keys, and requires integer amounts
+(compared like-for-like; the caller picks the unit) so signatures stay canonical
+across both languages. These rules are
+covered by a security-regression test block in each SDK. There is **no replay
+protection in v0** — usage/velocity limits need the roadmap registry, so they are
+omitted rather than parsed-and-ignored. Full notes in
+[`python/README.md`](python/README.md#security-model-read-this).
+
+## Design choices (and non-goals)
+
+- **Dependency-free core, both languages.** Pure-Python Ed25519 (RFC 8032) and
+  Node's built-in crypto. Nothing to install to try it; the key stays on the
+  device. (The pure-Python Ed25519 is the reference impl, not constant-time; swap
+  in libsodium for production.)
+- **No fine-tuned model.** Where an LLM is used (NL parsing, intent scoring) it is
+  off-the-shelf and optional. A fine-tuned verifier model is deliberately **out of
+  v0 scope** — it's a separate, high-cost ML project.
+- **Deferred to roadmap, not in this repo:** the hosted mandate registry,
+  revocation propagation, the audit-log service, billing tiers, and stateful
+  replay/usage enforcement. v0 is the local library only.
+
+## Layout
+
+```
+mandatekit/
+  python/        # pip-installable package + standalone tests
+  typescript/    # npm package, runs on Node 22+ via built-in type-stripping
+  LICENSE        # MIT
+```
+
+Per-language quick starts: [`python/README.md`](python/README.md) ·
+[`typescript/README.md`](typescript/README.md).
+
+## Try it in 10 seconds
+
+```bash
+# Python (no install needed)
+cd python && PYTHONPATH=. python3 ../demo.py
+
+# Python tests
+cd python && PYTHONPATH=. python3 tests/test_mandatekit.py
+
+# TypeScript tests (Node 22+)
+cd typescript && npm test
+```
+
+## License
+
+MIT.

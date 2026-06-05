@@ -1,0 +1,35 @@
+{
+  "name": "mandatekit",
+  "version": "0.0.1",
+  "description": "Sign and verify scope-bound mandates for AI agents. v0, tracks the AP2 Verifiable Intent draft.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Major Labs",
+  "homepage": "https://majorlabs.co",
+  "keywords": ["ai-agents", "ap2", "mandate", "verifiable-intent", "payments", "ed25519"],
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": ["dist", "README.md", "LICENSE"],
+  "engines": {
+    "node": ">=22.6"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "clean": "rm -rf dist",
+    "test": "node --test test/*.test.ts",
+    "test:build": "npm run build && node --test test/*.test.ts",
+    "prepublishOnly": "npm run clean && npm run build",
+    "demo": "node demo.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^22",
+    "typescript": "^5.7"
+  },
+  "dependencies": {}
+}
