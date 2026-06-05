@@ -1,0 +1,4 @@
+# file: /Users/charlesmajor/AI-Projects/major-labs/mandatekit/python/mandatekit/compiler.py
+# hypothesis_version: 6.141.1
+
+['$', ',', ',\\s*|\\s+and\\s+', 'EUR', 'GBP', 'USD', 'allow', 'apparel', 'april', 'august', 'books', 'categories', 'clothing', 'currency', 'december', 'deny', 'dollar', 'dollars', 'electronics', 'eur', 'euro', 'euros', 'expires_at', 'february', 'food', 'gbp', 'groceries', 'grocery', 'hardware', 'intent', 'january', 'july', 'june', 'march', 'max_amount', 'may', 'merchants', 'november', 'october', 'office', 'pound', 'pounds', 'september', 'software', 'travel', 'usd', 'value', '£', '€']

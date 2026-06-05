@@ -1,0 +1,4 @@
+# file: /Users/charlesmajor/AI-Projects/major-labs/mandatekit/python/mandatekit/__init__.py
+# hypothesis_version: 6.141.1
+
+['0.0.1', 'MANDATE_SCHEMA', 'SPEC', 'VERSION', '__version__', 'build_mandate', 'compile', 'generate_keypair', 'rule_based_parser', 'sign_mandate', 'validate', 'verify', 'verify_signature']

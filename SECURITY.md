@@ -26,15 +26,30 @@ security-regression test block in both SDKs (`test_attack*` / `attack N` tests).
 | 5 | Medium | Deeply nested JSON crashed `verify()` (`RecursionError`) | Iterative depth/size bound (`MAX_DEPTH`/`MAX_NODES`) before canonicalizing |
 | — | Medium | Float amounts diverge in cross-language canonicalization | Amounts must be integers (compared like-for-like, caller-chosen unit); floats rejected at build and verify |
 
+## Hardening pass (2026-06-05)
+
+Following the review, MandateKit moved onto vetted primitives and added automated
+and property-based testing:
+
+- **Constant-time, vetted Ed25519.** Signing/verification use the `cryptography`
+  library by default. The pure-Python RFC 8032 reference remains only as a
+  zero-dependency fallback (not constant-time) and warns at import.
+- **RFC 8785 (JCS) canonicalization** via the `rfc8785` (Python) and
+  `canonicalize` (TypeScript) libraries — byte-identical across both SDKs.
+- **Amounts bounded** to the JS-safe integer range `[0, 2**53-1]`, so JCS can
+  canonicalize them identically everywhere.
+- **`verify()` never throws.** Property-based tests (Hypothesis / fast-check)
+  fuzz it with arbitrary hostile input; signature checking and every constraint
+  path tolerate malformed types and return a verdict.
+- **CI security gates:** CodeQL, Semgrep, and Bandit run on every push, plus a
+  job that exercises the dependency-free fallback path.
+
 ## Known limitations (by design, v0)
 
 - **No replay / velocity / usage enforcement.** The verifier is stateless. These
   require the roadmap registry. `max_uses` is omitted rather than ignored.
-- **Pure-Python Ed25519 is the reference implementation** — correct (RFC 8032,
-  cross-checked against Node) but not constant-time and not strict about
-  non-canonical encodings. Use libsodium / `cryptography` in production.
-- **Canonicalization is sorted-key JSON, not RFC 8785 (JCS).** Safe for the v0
-  schema (ASCII keys, integer amounts); a 1.0 should adopt JCS.
+- **Not independently audited.** Automated tooling and property tests are not a
+  substitute for a third-party audit.
 - **Intent-basket alignment fails open** (a scorer error does not deny) by
   deliberate choice; integrators wanting fail-closed should enforce it themselves.
 

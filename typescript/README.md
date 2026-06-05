@@ -6,7 +6,8 @@ Sign and verify **scope-bound mandates for AI agents**. TypeScript port of
 > **v0, tracks the AP2 Verifiable Intent draft** (finalization expected Q3 2026).
 > Expect breaking changes.
 
-The core is **dependency-free** — Node's built-in Ed25519, no packages to install.
+Crypto uses Node's built-in Ed25519; canonicalization uses the **`canonicalize`**
+package (RFC 8785), byte-identical to the Python SDK's `rfc8785` output.
 
 ## Requirements
 

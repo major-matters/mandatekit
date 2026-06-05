@@ -6,8 +6,9 @@ Before an agent's transaction clears, you verify it against the mandate.
 
 > **v0, tracks the [AP2](https://github.com/google-agentic-commerce/AP2) Verifiable Intent draft** (finalization expected Q3 2026). Field names and scoring are MandateKit's own and will move as the spec settles. Expect breaking changes.
 
-The core is **dependency-free** — pure-Python Ed25519, no `pip install` needed to
-try it. The signing key never leaves your machine.
+Signing uses the vetted, constant-time **`cryptography`** library and **RFC 8785**
+canonicalization (`rfc8785`); pure-Python fallbacks keep it runnable with zero
+deps for experimentation. The signing key never leaves your machine.
 
 ## Install
 

@@ -124,6 +124,9 @@ export function verify(
   if (typeof constraints !== "object" || Array.isArray(constraints)) {
     return verdict("deny", false, [], mandate, "malformed mandate: constraints must be an object");
   }
+  if (!transaction || typeof transaction !== "object") {
+    transaction = {} as Transaction;
+  }
 
   const signatureValid = verifySignature(signed);
   const checks: Check[] = [];
@@ -156,22 +159,26 @@ export function verify(
 
   // --- Category (presence-based; empty list allows nothing) ---
   if ("categories" in constraints) {
-    const cats: unknown[] = constraints.categories ?? [];
+    const cats: unknown[] = Array.isArray(constraints.categories) ? constraints.categories : [];
     const txnCat = (transaction.category ?? "").toLowerCase();
     const ok = cats.map((c) => String(c).toLowerCase()).includes(txnCat);
     checks.push(check("category", ok, `${txnCat || "(none)"} ${ok ? "in" : "not in"} [${cats.join(", ")}]`));
   }
 
   // --- Merchant allow / deny (presence-based) ---
-  const merchants = constraints.merchants ?? {};
+  const rawMerchants = constraints.merchants;
+  const merchants =
+    rawMerchants && typeof rawMerchants === "object" && !Array.isArray(rawMerchants)
+      ? rawMerchants
+      : {};
   const merchant = transaction.merchant ?? "";
   if ("allow" in merchants) {
-    const allow: string[] = merchants.allow ?? [];
+    const allow: string[] = Array.isArray(merchants.allow) ? merchants.allow : [];
     const ok = allow.includes(merchant);
     checks.push(check("merchant_allow", ok, `'${merchant}' ${ok ? "is" : "is not"} on the allow-list`));
   }
   if ("deny" in merchants) {
-    const deny: string[] = merchants.deny ?? [];
+    const deny: string[] = Array.isArray(merchants.deny) ? merchants.deny : [];
     const ok = !deny.includes(merchant);
     checks.push(check("merchant_deny", ok, `'${merchant}' ${ok ? "is not" : "is"} on the deny-list`));
   }

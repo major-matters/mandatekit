@@ -11,11 +11,19 @@ requires-python = ">=3.8"
 license = { text = "MIT" }
 authors = [{ name = "Major Labs" }]
 keywords = ["ai-agents", "ap2", "mandate", "verifiable-intent", "payments", "ed25519"]
-dependencies = []  # the core is dependency-free (pure-Python Ed25519)
+# Vetted, constant-time Ed25519 (cryptography) and RFC 8785 canonicalization
+# (rfc8785). Pure-Python fallbacks exist if these are absent (see signing.py /
+# canonical.py), so the package still runs with zero deps for experimentation.
+dependencies = [
+  "cryptography>=42",
+  "rfc8785>=0.1.2",
+]
 
 [project.optional-dependencies]
 # Off-the-shelf LLM parsing / intent scoring. Not required for the core.
 llm = ["anthropic>=0.40"]
+# Property-based test suite.
+test = ["hypothesis>=6", "bandit>=1.7"]
 
 [project.urls]
 Homepage = "https://majorlabs.co"

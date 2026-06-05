@@ -31,6 +31,10 @@ from typing import Dict, List, Optional
 VERSION = "mandatekit/v0"
 SPEC = "AP2-draft-2026Q2"
 
+# Amounts must fit JS's safe-integer range so RFC 8785 (JCS) can canonicalize
+# them identically across languages.
+MAX_SAFE_INT = 2 ** 53 - 1
+
 
 def _now() -> datetime:
     return datetime.now(timezone.utc)
@@ -81,6 +85,10 @@ def build_mandate(
                 "max_amount.value must be an integer (amounts are compared like-for-like; "
                 "pick a unit, e.g. cents or whole units, and use it consistently); "
                 "floats are rejected to keep signatures canonical across languages"
+            )
+        if not 0 <= value <= MAX_SAFE_INT:
+            raise ValueError(
+                f"max_amount.value must be between 0 and {MAX_SAFE_INT} (JS-safe integer range)"
             )
         constraints["max_amount"] = {
             "value": value,
@@ -170,11 +178,16 @@ def validate(mandate: Dict) -> List[str]:
         errors.append("constraints must be an object")
     else:
         ma = c.get("max_amount")
-        if ma is not None and (
-            not isinstance(ma, dict)
-            or not isinstance(ma.get("value"), int)
-            or isinstance(ma.get("value"), bool)
-            or not ma.get("currency")
-        ):
-            errors.append("max_amount must be {value:integer, currency:string}")
+        if ma is not None:
+            v = ma.get("value") if isinstance(ma, dict) else None
+            if (
+                not isinstance(ma, dict)
+                or not isinstance(v, int)
+                or isinstance(v, bool)
+                or not 0 <= v <= MAX_SAFE_INT
+                or not ma.get("currency")
+            ):
+                errors.append(
+                    "max_amount must be {value:integer in [0, 2**53-1], currency:string}"
+                )
     return errors

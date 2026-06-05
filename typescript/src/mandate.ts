@@ -74,6 +74,9 @@ export function buildMandate(opts: BuildOptions): Mandate {
           "floats are rejected to keep signatures canonical across languages",
       );
     }
+    if (opts.maxAmount.value < 0 || opts.maxAmount.value > Number.MAX_SAFE_INTEGER) {
+      throw new Error("maxAmount.value must be between 0 and Number.MAX_SAFE_INTEGER");
+    }
     constraints.max_amount = {
       value: opts.maxAmount.value,
       currency: opts.maxAmount.currency ?? "USD",
@@ -113,8 +116,8 @@ export function validate(m: Mandate): string[] {
     }
   }
   const ma = m.constraints?.max_amount;
-  if (ma && (!Number.isInteger(ma.value) || !ma.currency)) {
-    errors.push("max_amount must be {value:integer, currency:string}");
+  if (ma && (!Number.isInteger(ma.value) || ma.value < 0 || ma.value > Number.MAX_SAFE_INTEGER || !ma.currency)) {
+    errors.push("max_amount must be {value:integer in [0, Number.MAX_SAFE_INTEGER], currency:string}");
   }
   return errors;
 }

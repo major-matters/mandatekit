@@ -1,7 +1,5 @@
 # CI for MandateKit. Lives under mandatekit/ so it sits at the repo root once the
-# package is extracted into its own public repository. It does not auto-run while
-# mandatekit/ is nested inside the major-labs monorepo (GitHub only runs workflows
-# from the repo-root .github/workflows/).
+# package is extracted into its own public repository.
 name: CI
 
 on:
@@ -21,7 +19,28 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Tests (dependency-free core)
+      - name: Install deps (vetted crypto + JCS + test/lint tools)
+        working-directory: python
+        run: pip install cryptography rfc8785 hypothesis bandit
+      - name: Unit tests
+        working-directory: python
+        run: PYTHONPATH=. python tests/test_mandatekit.py
+      - name: Property tests (Hypothesis)
+        working-directory: python
+        run: PYTHONPATH=. python tests/test_properties.py
+      - name: Bandit (security lint)
+        working-directory: python
+        run: bandit -r mandatekit -ll
+
+  python-fallback:
+    name: Python (dependency-free fallback)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Unit tests with NO optional deps (pure-Python Ed25519 + sorted-JSON fallback)
         working-directory: python
         run: PYTHONPATH=. python tests/test_mandatekit.py
 
@@ -33,12 +52,22 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-      - name: Install dev deps
+      - name: Install
         working-directory: typescript
         run: npm install --no-audit --no-fund
       - name: Build (type-check + emit dist + types)
         working-directory: typescript
         run: npm run build
-      - name: Tests
+      - name: Tests (unit + property)
         working-directory: typescript
         run: npm test
+
+  semgrep:
+    name: Semgrep (SAST)
+    runs-on: ubuntu-latest
+    container:
+      image: semgrep/semgrep
+    steps:
+      - uses: actions/checkout@v4
+      - name: Semgrep scan
+        run: semgrep scan --config p/python --config p/typescript --config p/secrets --error

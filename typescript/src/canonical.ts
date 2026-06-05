@@ -1,23 +1,16 @@
 /**
- * Canonical JSON for signing. Sorted keys + compact separators, byte-identical
- * to the Python port's `canonicalize`. See the Python module for the rationale
- * and the v0-vs-JCS note.
+ * Canonical JSON for signing — RFC 8785 (JSON Canonicalization Scheme), via the
+ * `canonicalize` package (by the RFC's author). Byte-identical to the Python
+ * SDK's output (Python uses the `rfc8785` library, same RFC), so a mandate signed
+ * in one SDK verifies in the other.
  */
 
-function sortValue(v: unknown): unknown {
-  if (Array.isArray(v)) return v.map(sortValue);
-  if (v && typeof v === "object") {
-    const out: Record<string, unknown> = {};
-    for (const k of Object.keys(v as Record<string, unknown>).sort()) {
-      out[k] = sortValue((v as Record<string, unknown>)[k]);
-    }
-    return out;
-  }
-  return v;
-}
+import jcs from "canonicalize";
 
 export function canonicalize(obj: unknown): Buffer {
-  // JSON.stringify uses no whitespace and ',' / ':' separators by default,
-  // matching Python's compact separators.
-  return Buffer.from(JSON.stringify(sortValue(obj)), "utf8");
+  const s = jcs(obj);
+  if (s === undefined) {
+    throw new Error("canonicalize: value cannot be canonicalized");
+  }
+  return Buffer.from(s, "utf8");
 }

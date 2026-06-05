@@ -1,0 +1,4 @@
+# file: /Users/charlesmajor/AI-Projects/major-labs/mandatekit/python/mandatekit/verifier.py
+# hypothesis_version: 6.141.1
+
+[0.0, 0.6, 10000, '; ', 'allow', 'amount', 'ascii', 'categories', 'category', 'constraint', 'constraints', 'currency', 'decision', 'deny', 'detail', 'expires_at', 'failed', 'has_scope', 'in scope: ', 'intent', 'intent_alignment', 'issuer_trusted', 'mandate', 'mandate has expired', 'mandate_id', 'matched', 'max_amount', 'merchant', 'merchant_allow', 'merchant_deny', 'merchants', 'not_expired', 'out of scope: ', 'passed', 'public_key', 'rationale', 'scope_match_score', 'signature', 'signature_valid', 'value']

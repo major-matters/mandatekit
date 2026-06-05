@@ -140,13 +140,16 @@ def verify(
     if not isinstance(constraints, dict):
         return _verdict("deny", signature_valid=False, checks=[], mandate=mandate,
                         rationale="malformed mandate: constraints must be an object")
+    if not isinstance(transaction, dict):
+        transaction = {}
 
     signature_valid = verify_signature(signed)
     checks: List[Dict] = []
 
     # --- Issuer trust (the critical check) -----------------------------------
     trusted = _normalize_trusted(trusted_keys)
-    env_key = (signed.get("signature") or {}).get("public_key")
+    sig_obj = signed.get("signature")
+    env_key = sig_obj.get("public_key") if isinstance(sig_obj, dict) else None
     if trusted is not None:
         issuer_ok = isinstance(env_key, str) and env_key in trusted
         checks.append(_check(
@@ -183,31 +186,39 @@ def verify(
 
     # --- Category (presence-based; empty list allows nothing) ----------------
     if "categories" in constraints:
-        cats = constraints["categories"] or []
+        cats = constraints["categories"]
+        cats = cats if isinstance(cats, list) else []
         txn_cat = (transaction.get("category") or "").lower()
         ok = txn_cat in [str(c).lower() for c in cats]
         checks.append(_check("category", ok,
                              f"{txn_cat or '(none)'} {'in' if ok else 'not in'} {cats}"))
 
     # --- Merchant allow / deny (presence-based) ------------------------------
-    merchants = constraints.get("merchants") or {}
+    merchants = constraints.get("merchants")
+    merchants = merchants if isinstance(merchants, dict) else {}
     merchant = transaction.get("merchant") or ""
     if "allow" in merchants:
-        allow = merchants.get("allow") or []
+        allow = merchants.get("allow")
+        allow = allow if isinstance(allow, list) else []
         ok = merchant in allow
         checks.append(_check("merchant_allow", ok,
                              f"{merchant!r} {'is' if ok else 'is not'} on the allow-list"))
     if "deny" in merchants:
-        deny = merchants.get("deny") or []
+        deny = merchants.get("deny")
+        deny = deny if isinstance(deny, list) else []
         ok = merchant not in deny
         checks.append(_check("merchant_deny", ok,
                              f"{merchant!r} {'is not' if ok else 'is'} on the deny-list"))
 
     # --- Amount (integers only, compared like-for-like) ----------------------
     max_amount = constraints.get("max_amount")
+    if max_amount is not None and not isinstance(max_amount, dict):
+        checks.append(_check("amount", False, "malformed max_amount constraint"))
+        max_amount = None
     if max_amount is not None:
         cap = max_amount.get("value")
-        txn_amount = transaction.get("amount") or {}
+        txn_amount = transaction.get("amount")
+        txn_amount = txn_amount if isinstance(txn_amount, dict) else {}
         value = txn_amount.get("value")
         currency = txn_amount.get("currency")
         if not _is_int(cap):

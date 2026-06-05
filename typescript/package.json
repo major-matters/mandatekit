@@ -6,7 +6,14 @@
   "license": "MIT",
   "author": "Major Labs",
   "homepage": "https://majorlabs.co",
-  "keywords": ["ai-agents", "ap2", "mandate", "verifiable-intent", "payments", "ed25519"],
+  "keywords": [
+    "ai-agents",
+    "ap2",
+    "mandate",
+    "verifiable-intent",
+    "payments",
+    "ed25519"
+  ],
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -15,7 +22,11 @@
       "import": "./dist/index.js"
     }
   },
-  "files": ["dist", "README.md", "LICENSE"],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "engines": {
     "node": ">=22.6"
   },
@@ -29,7 +40,10 @@
   },
   "devDependencies": {
     "@types/node": "^22",
+    "fast-check": "^4.8.0",
     "typescript": "^5.7"
   },
-  "dependencies": {}
+  "dependencies": {
+    "canonicalize": "^3.0.0"
+  }
 }

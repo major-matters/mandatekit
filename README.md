@@ -83,10 +83,14 @@ omitted rather than parsed-and-ignored. Full notes in
 
 ## Design choices (and non-goals)
 
-- **Dependency-free core, both languages.** Pure-Python Ed25519 (RFC 8032) and
-  Node's built-in crypto. Nothing to install to try it; the key stays on the
-  device. (The pure-Python Ed25519 is the reference impl, not constant-time; swap
-  in libsodium for production.)
+- **Vetted crypto and canonicalization.** Signing uses the `cryptography` library
+  (constant-time Ed25519) and RFC 8785 (JCS) canonicalization (`rfc8785`); the
+  TypeScript SDK uses Node's built-in crypto and the `canonicalize` package, so
+  the two are byte-identical. Pure-Python / sorted-JSON fallbacks keep it runnable
+  with zero deps for experimentation. The key stays on the device.
+- **Tested adversarially.** Property-based tests (Hypothesis / fast-check) fuzz
+  the crypto and the verifier; CodeQL, Semgrep, and Bandit run in CI. Not a
+  substitute for a third-party audit, which it has not had.
 - **No fine-tuned model.** Where an LLM is used (NL parsing, intent scoring) it is
   off-the-shelf and optional. A fine-tuned verifier model is deliberately **out of
   v0 scope** — it's a separate, high-cost ML project.
