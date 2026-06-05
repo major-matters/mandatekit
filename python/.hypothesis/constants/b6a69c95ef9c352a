@@ -1,4 +1,0 @@
-# file: /Users/charlesmajor/AI-Projects/major-labs/mandatekit/python/mandatekit/mandate.py
-# hypothesis_version: 6.141.1
-
-['$schema', '+00:00', 'AP2-draft-2026Q2', 'USD', 'Z', 'agent_id', 'allow', 'array', 'categories', 'const', 'constraints', 'currency', 'date-time', 'deny', 'description', 'expires_at', 'format', 'integer', 'intent', 'issued_at', 'items', 'mandate_id', 'mandatekit/v0', 'max_amount', 'merchants', 'object', 'properties', 'required', 'spec', 'string', 'subject', 'title', 'type', 'value', 'version']

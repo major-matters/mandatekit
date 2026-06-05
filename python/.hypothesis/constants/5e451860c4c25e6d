@@ -1,4 +1,0 @@
-# file: /Users/charlesmajor/AI-Projects/major-labs/mandatekit/python/mandatekit/signing.py
-# hypothesis_version: 6.141.1
-
-['Ed25519', 'alg', 'ascii', 'cryptography', 'mandate', 'public_key', 'pure-python', 'signature', 'value']

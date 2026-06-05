@@ -13,3 +13,6 @@ typescript/dist/
 
 # OS
 .DS_Store
+
+# Hypothesis test cache
+.hypothesis/
