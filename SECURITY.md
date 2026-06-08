@@ -56,3 +56,11 @@ and property-based testing:
 ## Reporting
 
 This is a pre-release v0 prototype. Do not use it to authorize real funds.
+
+## Audit status (v0)
+
+This is a v0 release. It has been independently hardened — CodeQL, bandit, semgrep, property-based tests, and adversarial tier 1-2 reviews, all passing in CI — but it has **not** had a third-party security audit. Treat it accordingly for anything high-stakes.
+
+## Security review welcome
+
+We actively want researcher eyes on this. If you find a fail-open, a signature bypass, an SSRF path, or any way to defeat a guarantee in this document, please open an issue. Credit given. The shared crypto core (Ed25519 + RFC 8785 canonicalization) and the verifier's fail-closed paths are the highest-value targets.
