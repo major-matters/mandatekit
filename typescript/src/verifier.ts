@@ -81,6 +81,19 @@ function isInt(v: unknown): v is number {
   return typeof v === "number" && Number.isInteger(v);
 }
 
+const ISO_8601 = /^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2}):(\d{2})(\.\d+)?(Z|[+-]\d{2}:\d{2})?$/;
+
+/** Strict ISO-8601 instant parser mirroring Python's parse_iso. Returns epoch
+ *  milliseconds, or NaN if the string is not a valid ISO-8601 date-time. A naive
+ *  timestamp (no offset) is treated as UTC, matching the Python SDK. */
+function parseIsoStrict(s: unknown): number {
+  if (typeof s !== "string") return NaN;
+  const m = ISO_8601.exec(s);
+  if (!m) return NaN;
+  const offset = m[8] && m[8] !== "Z" ? m[8] : "Z"; // naive or "Z" -> UTC
+  return Date.parse(`${m[1]}-${m[2]}-${m[3]}T${m[4]}:${m[5]}:${m[6]}${m[7] ?? ""}${offset}`);
+}
+
 function verdict(
   decision: "allow" | "deny",
   signatureValid: boolean,
@@ -153,7 +166,12 @@ export function verify(
     hasScope ? "mandate defines spending limits" : "mandate has no spending constraints (unbounded); refused"));
 
   // --- Expiry ---
-  const expiresAt = Date.parse(mandate.expires_at);
+  // Strict ISO-8601 only, matching Python's parse_iso (datetime.fromisoformat).
+  // Date.parse is too lenient: it accepts "30 June 2026" and reads naive
+  // timestamps as LOCAL time, so the same signed mandate could be allowed in TS
+  // while denied in Python (audit 2026-06-10 finding #4). A naive timestamp is
+  // anchored to UTC here, exactly as Python does.
+  const expiresAt = parseIsoStrict(mandate.expires_at);
   const expired = Number.isNaN(expiresAt) || now.getTime() > expiresAt;
   checks.push(check("not_expired", !expired, expired ? "mandate has expired" : "within validity window"));
 

@@ -64,3 +64,9 @@ This is a v0 release. It has been independently hardened — CodeQL, bandit, sem
 ## Security review welcome
 
 We actively want researcher eyes on this. If you find a fail-open, a signature bypass, an SSRF path, or any way to defeat a guarantee in this document, please open an issue. Credit given. The shared crypto core (Ed25519 + RFC 8785 canonicalization) and the verifier's fail-closed paths are the highest-value targets.
+
+## v0.0.2 hardening (2026-06-10 internal audit)
+
+- **Expiry parsing unified.** The TypeScript verifier no longer uses the lenient `Date.parse` (which accepted strings like "30 June 2026" and read naive timestamps as local time). It now uses a strict ISO-8601 parser matching Python's `fromisoformat`, with naive timestamps anchored to UTC, so the same signed mandate yields the same verdict in both SDKs.
+- **Scope vs amount (clarification).** A mandate is "scoped" if it sets any one of `categories`, `merchants`, or `max_amount`. A mandate without `max_amount` therefore carries **no spending ceiling**; if you need one, set `max_amount` explicitly or enforce a cap out of band.
+- **Canonicalization fallback** now fails closed on floats / out-of-safe-range integers (see the shared crypto core note).

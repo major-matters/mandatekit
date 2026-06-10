@@ -163,3 +163,28 @@ test("float transaction amount denied", () => {
   const v = vrf(s, { merchant: "X", category: "apparel", amount: { value: 19.99, currency: "USD" } });
   assert.equal(v.decision, "deny");
 });
+
+// --- expiry parsing (audit 2026-06-10 finding #4) ---------------------------
+
+function signedWithExpiry(expires: string) {
+  const m: any = buildMandate({ agentId: "agent-7", maxAmount: { value: 500, currency: "USD" }, issuedAt: NOW });
+  m.expires_at = expires;
+  return signMandate(m, KEY);
+}
+
+const GOOD_TXN: Transaction = { amount: { value: 100, currency: "USD" } };
+
+test("non-ISO expiry is denied (no Date.parse leniency)", () => {
+  for (const bad of ["30 June 2026", "June 30 2026", "2026-13-01T00:00:00Z", "next year"]) {
+    const v = vrf(signedWithExpiry(bad), GOOD_TXN);
+    assert.equal(v.decision, "deny", `non-ISO expiry not denied: ${bad}`);
+  }
+});
+
+test("canonical future expiry is allowed", () => {
+  assert.equal(vrf(signedWithExpiry("2026-12-31T23:59:59Z"), GOOD_TXN).decision, "allow");
+});
+
+test("naive expiry is treated as UTC (matches Python)", () => {
+  assert.equal(vrf(signedWithExpiry("2026-12-31 23:59:59"), GOOD_TXN).decision, "allow");
+});

@@ -294,6 +294,41 @@ def test_anthropic_parser_offline_with_stubbed_client():
     assert verify_signature(signed)
 
 
+# --- expiry parsing (audit 2026-06-10 finding #4) ---------------------------
+
+def _signed_with_expiry(expires_str):
+    """Build a scoped mandate, force a raw expires_at string, and sign it."""
+    m = build_mandate(
+        agent_id="agent-7",
+        max_amount={"value": 500, "currency": "USD"},
+        issued_at=NOW,
+    )
+    m["expires_at"] = expires_str
+    return sign_mandate(m, KEY)
+
+
+_GOOD_TXN = {"amount": {"value": 100, "currency": "USD"}}
+
+
+def test_non_iso_expiry_is_denied():
+    """A non-ISO expires_at must be treated as expired (fail closed), so it cannot
+    be allowed in TypeScript while denied in Python."""
+    for bad in ["30 June 2026", "June 30 2026", "2026-13-01T00:00:00Z", "next year"]:
+        v = vrf(_signed_with_expiry(bad), _GOOD_TXN)
+        assert v["decision"] == "deny", f"non-ISO expiry {bad!r} was not denied"
+
+
+def test_canonical_future_expiry_allowed():
+    v = vrf(_signed_with_expiry("2026-12-31T23:59:59Z"), _GOOD_TXN)
+    assert v["decision"] == "allow"
+
+
+def test_naive_expiry_treated_as_utc():
+    """A naive (offset-less) timestamp is anchored to UTC, matching the TS SDK."""
+    v = vrf(_signed_with_expiry("2026-12-31 23:59:59"), _GOOD_TXN)
+    assert v["decision"] == "allow"
+
+
 # --- standalone runner ------------------------------------------------------
 
 if __name__ == "__main__":
