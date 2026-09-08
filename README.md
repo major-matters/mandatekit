@@ -3,9 +3,9 @@
 [![CI](https://github.com/major-matters/mandatekit/actions/workflows/ci.yml/badge.svg)](https://github.com/major-matters/mandatekit/actions/workflows/ci.yml)
 
 > ⚠️ **Experimental — unaudited, not for production.** A v0 research prototype with
-> no third-party security audit. **Do not use it to authorize real funds.** Not yet
-> published to npm or PyPI — install from source. The API and on-the-wire format
-> will change.
+> no third-party security audit. **Do not use it to authorize real funds.** Published
+> to [PyPI](https://pypi.org/project/mandatekit/) and [npm](https://www.npmjs.com/package/mandatekit)
+> as `mandatekit`. The API and on-the-wire format will change.
 
 **Sign and verify scope-bound mandates for AI agents.**
 
@@ -21,7 +21,8 @@ ships in **Python** and **TypeScript**, with byte-compatible signatures across t
 two (a mandate signed in one verifies in the other).
 
 > **v0 status.** This tracks the [AP2](https://github.com/google-agentic-commerce/AP2)
-> Verifiable Intent **draft** (finalization expected Q3 2026). Field names and
+> Verifiable Intent **draft**, contributed to the FIDO Alliance in May 2026 and under
+> community standardization there. Field names and
 > scoring are MandateKit's own until the spec settles. Treat it as a working
 > prototype, not a stable API — expect breaking changes.
 
@@ -122,6 +123,16 @@ cd python && PYTHONPATH=. python3 tests/test_mandatekit.py
 # TypeScript tests (Node 22+)
 cd typescript && npm test
 ```
+
+---
+
+## The accountability stack, September 2026
+
+This year's frontier launches arrived alongside rogue-agent incidents that investigators struggled to attribute, and a written admission from inside the labs that runtime monitoring is degrading. The accountability primitives those events call for are what this suite implements:
+
+> **[IdentityKit](https://github.com/major-matters/identitykit)** says who the agent is. **[MandateKit](https://github.com/major-matters/mandatekit)** says what it may do. **[BudgetGuard](https://github.com/major-matters/budget-guard)** caps what it spends. **[WitnessKit](https://github.com/major-matters/witnesskit)** proves what it did. **[RememberKit](https://github.com/major-matters/rememberkit)** governs what it remembers.
+
+The [MM Control Stack Compact](https://www.majormatters.co/p/open-letter-control-stack-compact) (September 2026) proposes six verifiable commitments for frontier-AI accountability. Attributable agents and contractually bounded authority need running code, not pledges. This suite is a working v0 of that layer.
 
 ## License
 
