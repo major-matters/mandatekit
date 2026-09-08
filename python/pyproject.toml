@@ -30,6 +30,7 @@ Homepage = "https://majorlabs.co"
 
 [project.scripts]
 mandatekit = "mandatekit.cli:main"
+mandatekit-mcp = "mandatekit.mcp:main"
 
 [tool.setuptools]
 packages = ["mandatekit"]

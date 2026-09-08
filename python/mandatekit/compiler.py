@@ -205,8 +205,13 @@ def compile(
     now: Optional[datetime] = None,
 ) -> Dict:
     """Compile natural-language `text` into a signed mandate envelope."""
-    parser = parser or rule_based_parser
-    parsed = parser(text)
+    # The default parser resolves relative dates ("expires June 30") against
+    # `now` so a pinned clock gives a deterministic mandate. A custom parser
+    # owns its own clock: the Parser contract stays single-argument.
+    if parser is None:
+        parsed = rule_based_parser(text, now=now)
+    else:
+        parsed = parser(text)
     mandate = build_mandate(
         agent_id=agent_id,
         intent=parsed.get("intent"),

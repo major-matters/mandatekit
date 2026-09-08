@@ -67,6 +67,30 @@ intent-basket alignment ("do running shoes satisfy the stated intent?"), is
 **optional and injected**; a missing or failing model never turns a deny into an
 allow.
 
+## Gate an MCP server
+
+The fastest way to put a mandate to work is not a payment flow, it is a tool
+call. `mandatekit-mcp` wraps any MCP server (stdio transport) and checks every
+`tools/call` against a signed mandate before the server sees it:
+
+```bash
+pip install mandatekit
+mandatekit-mcp --mandate signed.json --trust @issuer.pub -- python -m your_mcp_server
+```
+
+The mapping is the mandate's own vocabulary: the mandate's `categories` list is
+the signed tool allowlist (the tool name is the transaction category),
+`--server-name` matches the merchant allow/deny lists so a mandate can be pinned
+to one server, and a `{"value": <int>, "currency": "<str>"}` amount in the tool
+arguments is capped by `max_amount`. Denials return to the agent as a normal MCP
+tool result with `isError: true` and the reason, so sessions survive a refusal.
+
+Fail-closed like the rest of the kit: an unparseable or unverifiable tool call
+is denied, never forwarded, and the proxy refuses to start without a pinned
+issuer key. Every other MCP message (`initialize`, `tools/list`, resources,
+notifications) passes through untouched. Python only for now; stdlib only, no
+model, no network.
+
 ## Security model
 
 A valid signature proves **integrity, not authority**: that the mandate was not
