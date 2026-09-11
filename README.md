@@ -1,5 +1,7 @@
 # MandateKit · v0
 
+[![MCP Surface Check: low surface](https://img.shields.io/badge/MCP_Surface_Check-low-4FA86A)](https://majorlabs.co/security)
+
 [![CI](https://github.com/major-matters/mandatekit/actions/workflows/ci.yml/badge.svg)](https://github.com/major-matters/mandatekit/actions/workflows/ci.yml)
 
 > ⚠️ **Experimental — unaudited, not for production.** A v0 research prototype with
