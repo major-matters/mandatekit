@@ -1,0 +1,15 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "MandateKit"
+type: software
+authors:
+  - name: "Major Labs"
+    website: "https://majorlabs.co"
+repository-code: "https://github.com/major-matters/mandatekit"
+url: "https://majorlabs.co"
+license: MIT
+abstract: "Signed, scoped, revocable mandates for AI agents (may). Part of the Major Labs open agent-safety toolkit."
+references:
+  - type: dataset
+    title: "Major Labs MCP Ecosystem Dataset"
+    doi: "10.5281/zenodo.22674847"
