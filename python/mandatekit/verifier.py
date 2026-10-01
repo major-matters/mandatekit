@@ -35,8 +35,15 @@ A transaction is a dict:
       "merchant": "Fleet Feet",
       "category": "apparel",
       "amount": {"value": 240, "currency": "USD"},   # integer value
-      "description": "Brooks Ghost 16 running shoes"
+      "description": "Brooks Ghost 16 running shoes",
+      "action": "pay",                                # optional verb, checked against constraints.actions
+      "approval": {...signed step mandate...}         # optional, satisfies an "ask" verdict
     }
+
+Verdicts are "allow", "ask" or "deny". "ask" means every scope check passed
+but the mandate's approval rules want a fresh issuer-signed step mandate for
+this transaction (see `step_mandate`) before it may run. Treat anything other
+than "allow" as not allowed.
 """
 
 import base64
@@ -50,9 +57,11 @@ IntentScorer = Callable[[str, Dict], float]
 TrustedKeys = Union[str, bytes, Iterable[Union[str, bytes]]]
 
 # Constraint keys the verifier can actually enforce. Anything else is denied.
-KNOWN_CONSTRAINT_KEYS = {"intent", "categories", "merchants", "max_amount"}
+KNOWN_CONSTRAINT_KEYS = {"intent", "categories", "merchants", "max_amount", "actions", "approval"}
 # At least one of these "hard" scope limiters must be present, or the mandate is
-# unbounded and refused. (intent is fuzzy/advisory, so it does not count.)
+# unbounded and refused. (intent is fuzzy/advisory, so it does not count, and
+# neither does `actions`: an allow-list of verbs with no category, merchant or
+# amount limit is still unbounded in what it can reach.)
 SCOPING_KEYS = {"categories", "merchants", "max_amount"}
 
 # DoS guards for hostile JSON.
@@ -188,7 +197,8 @@ def verify(
     if "categories" in constraints:
         cats = constraints["categories"]
         cats = cats if isinstance(cats, list) else []
-        txn_cat = (transaction.get("category") or "").lower()
+        txn_cat = transaction.get("category")
+        txn_cat = txn_cat.lower() if isinstance(txn_cat, str) else ""
         ok = txn_cat in [str(c).lower() for c in cats]
         checks.append(_check("category", ok,
                              f"{txn_cat or '(none)'} {'in' if ok else 'not in'} {cats}"))
@@ -235,6 +245,73 @@ def verify(
             checks.append(_check("amount", ok,
                                  f"{value} {currency} {'<=' if ok else '>'} cap {cap} {currency}"))
 
+    # --- Action verb (presence-based; empty list allows nothing) -------------
+    if "actions" in constraints:
+        acts = constraints["actions"]
+        acts = acts if isinstance(acts, list) else []
+        txn_act = (transaction.get("action") or "")
+        txn_act = txn_act.lower() if isinstance(txn_act, str) else ""
+        ok = txn_act in [str(a).lower() for a in acts]
+        checks.append(_check("action", ok,
+                             f"action {txn_act or '(none)'} {'in' if ok else 'not in'} {acts}"))
+
+    # --- Approval (step-up): some verbs or amounts need a step mandate -------
+    approval_required = False
+    if "approval" in constraints:
+        approval = constraints["approval"]
+        if not isinstance(approval, dict):
+            checks.append(_check("approval", False, "malformed approval constraint"))
+        else:
+            reasons: List[str] = []
+            ask_acts = approval.get("actions")
+            ask_acts = ask_acts if isinstance(ask_acts, list) else []
+            txn_act = (transaction.get("action") or "")
+            txn_act = txn_act.lower() if isinstance(txn_act, str) else ""
+            if txn_act in [str(a).lower() for a in ask_acts]:
+                reasons.append(f"action {txn_act} needs approval")
+            above = approval.get("above")
+            if above is not None:
+                amt = transaction.get("amount")
+                amt = amt if isinstance(amt, dict) else {}
+                if not isinstance(above, dict) or not _is_int(above.get("value")) or not above.get("currency"):
+                    reasons.append("malformed approval.above")
+                elif amt.get("value") is not None:
+                    if not _is_int(amt.get("value")) or amt.get("currency") != above["currency"]:
+                        reasons.append(
+                            f"amount {amt.get('value')} {amt.get('currency')} cannot be compared "
+                            f"with approval threshold {above['value']} {above['currency']}")
+                    elif amt["value"] > above["value"]:
+                        reasons.append(
+                            f"{amt['value']} {amt['currency']} > approval threshold "
+                            f"{above['value']} {above['currency']}")
+            if reasons:
+                step = transaction.get("approval")
+                if step is None:
+                    approval_required = True
+                    checks.append(_check("approval", False, "approval required: " + "; ".join(reasons)))
+                else:
+                    target = {k: v for k, v in transaction.items() if k != "approval"}
+                    if isinstance(step, dict) and isinstance(step.get("mandate"), dict) and _within_limits(step):
+                        inner = verify(step, target, now=now, trusted_keys=trusted_keys,
+                                       allow_unverified_issuer=allow_unverified_issuer)
+                    else:
+                        inner = _verdict("deny", signature_valid=False, checks=[], mandate={},
+                                         rationale="malformed step mandate")
+                    step_mandate = step.get("mandate") if isinstance(step, dict) else None
+                    step_subject = step_mandate.get("subject") if isinstance(step_mandate, dict) else None
+                    step_agent = step_subject.get("agent_id") if isinstance(step_subject, dict) else None
+                    own_subject = mandate.get("subject")
+                    own_agent = own_subject.get("agent_id") if isinstance(own_subject, dict) else None
+                    same_agent = step_agent is not None and step_agent == own_agent
+                    if inner["decision"] == "allow" and same_agent:
+                        checks.append(_check("approval", True,
+                                             f"step mandate {inner['mandate_id']} approves this transaction"))
+                    elif inner["decision"] == "allow":
+                        checks.append(_check("approval", False, "step mandate is for a different agent"))
+                    else:
+                        checks.append(_check("approval", False,
+                                             f"step mandate rejected: {inner['rationale']}"))
+
     # --- Intent-basket alignment (optional, injected) ------------------------
     intent_alignment: Optional[float] = None
     intent = constraints.get("intent")
@@ -253,6 +330,10 @@ def verify(
         return _verdict("deny", signature_valid=False, checks=checks, mandate=mandate,
                         intent_alignment=intent_alignment,
                         rationale="signature invalid: the mandate was not signed by its claimed key or was altered after signing")
+    if len(failed) == 1 and approval_required and failed[0]["constraint"] == "approval":
+        return _verdict("ask", signature_valid=True, checks=checks, mandate=mandate,
+                        intent_alignment=intent_alignment,
+                        rationale="needs approval: " + failed[0]["detail"])
     if failed:
         return _verdict("deny", signature_valid=True, checks=checks, mandate=mandate,
                         intent_alignment=intent_alignment,

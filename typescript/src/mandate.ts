@@ -13,11 +13,23 @@ export interface Amount {
   currency: string;
 }
 
+/** Step-up rules: which actions, or amounts above what, need a fresh
+ *  issuer-signed step mandate before they may proceed (verdict "ask"). */
+export interface Approval {
+  actions?: string[];
+  above?: Amount;
+}
+
 export interface Constraints {
   intent?: string;
   categories?: string[];
   merchants?: { allow?: string[]; deny?: string[] };
   max_amount?: Amount;
+  /** Allow-list of action verbs (e.g. read, draft, submit, pay, cancel, share).
+   *  Presence-based: an empty list allows nothing. A filter, not a scope: it
+   *  does not on its own make an otherwise unbounded mandate acceptable. */
+  actions?: string[];
+  approval?: Approval;
 }
 
 export interface Mandate {
@@ -44,10 +56,26 @@ export interface BuildOptions {
   categories?: string[];
   merchants?: { allow?: string[]; deny?: string[] };
   maxAmount?: Amount;
+  actions?: string[];
+  approval?: Approval;
   issuedAt?: Date;
   expiresAt?: Date;
   ttlDays?: number;
   mandateId?: string;
+}
+
+function checkedAmount(name: string, amount: Amount): Amount {
+  if (!Number.isInteger(amount.value)) {
+    throw new Error(
+      `${name}.value must be an integer (amounts are compared like-for-like; ` +
+        "pick a unit, e.g. cents or whole units, and use it consistently); " +
+        "floats are rejected to keep signatures canonical across languages",
+    );
+  }
+  if (amount.value < 0 || amount.value > Number.MAX_SAFE_INTEGER) {
+    throw new Error(`${name}.value must be between 0 and Number.MAX_SAFE_INTEGER`);
+  }
+  return { value: amount.value, currency: amount.currency ?? "USD" };
 }
 
 export function buildMandate(opts: BuildOptions): Mandate {
@@ -67,20 +95,15 @@ export function buildMandate(opts: BuildOptions): Mandate {
     if (opts.merchants.deny?.length) constraints.merchants.deny = [...opts.merchants.deny];
   }
   if (opts.maxAmount) {
-    if (!Number.isInteger(opts.maxAmount.value)) {
-      throw new Error(
-        "maxAmount.value must be an integer (amounts are compared like-for-like; " +
-          "pick a unit, e.g. cents or whole units, and use it consistently); " +
-          "floats are rejected to keep signatures canonical across languages",
-      );
-    }
-    if (opts.maxAmount.value < 0 || opts.maxAmount.value > Number.MAX_SAFE_INTEGER) {
-      throw new Error("maxAmount.value must be between 0 and Number.MAX_SAFE_INTEGER");
-    }
-    constraints.max_amount = {
-      value: opts.maxAmount.value,
-      currency: opts.maxAmount.currency ?? "USD",
-    };
+    constraints.max_amount = checkedAmount("maxAmount", opts.maxAmount);
+  }
+  if (opts.actions) {
+    constraints.actions = [...opts.actions];
+  }
+  if (opts.approval && (opts.approval.actions?.length || opts.approval.above)) {
+    constraints.approval = {};
+    if (opts.approval.actions?.length) constraints.approval.actions = [...opts.approval.actions];
+    if (opts.approval.above) constraints.approval.above = checkedAmount("approval.above", opts.approval.above);
   }
 
   return {
@@ -119,5 +142,58 @@ export function validate(m: Mandate): string[] {
   if (ma && (!Number.isInteger(ma.value) || ma.value < 0 || ma.value > Number.MAX_SAFE_INTEGER || !ma.currency)) {
     errors.push("max_amount must be {value:integer in [0, Number.MAX_SAFE_INTEGER], currency:string}");
   }
+  const ab = m.constraints?.approval?.above;
+  if (ab && (!Number.isInteger(ab.value) || ab.value < 0 || ab.value > Number.MAX_SAFE_INTEGER || !ab.currency)) {
+    errors.push("approval.above must be {value:integer in [0, Number.MAX_SAFE_INTEGER], currency:string}");
+  }
   return errors;
+}
+
+/** The transaction a step mandate is narrowed to. Structurally the verifier's
+ *  Transaction minus the approval envelope. */
+export interface StepTarget {
+  action?: string;
+  merchant?: string;
+  category?: string;
+  amount?: Amount;
+  description?: string;
+}
+
+export interface StepOptions {
+  issuedAt?: Date;
+  ttlMinutes?: number;
+  mandateId?: string;
+}
+
+/**
+ * Narrow a parent mandate to exactly one transaction. The result is an ordinary
+ * mandate for the same agent whose scope is the given action, merchant,
+ * category and amount, with a short validity window. The issuer signs it, and
+ * the agent presents it as `transaction.approval` to satisfy an "ask" verdict.
+ * This is the human-present confirmation of AP2 (an intent mandate narrowed to
+ * a cart) and the step-up of a payment flow, in the kit's own format.
+ */
+export function stepMandate(parent: Mandate, target: StepTarget, opts: StepOptions = {}): Mandate {
+  const issued = opts.issuedAt ?? new Date();
+  const ttl = opts.ttlMinutes ?? 15;
+  if (!(ttl > 0)) throw new Error("ttlMinutes must be positive");
+  const constraints: Constraints = {};
+  if (target.action) constraints.actions = [target.action];
+  if (target.merchant) constraints.merchants = { allow: [target.merchant] };
+  if (target.category) constraints.categories = [target.category];
+  if (target.amount) constraints.max_amount = checkedAmount("amount", target.amount);
+  if (!constraints.merchants && !constraints.categories && !constraints.max_amount) {
+    throw new Error("a step mandate needs a merchant, category or amount to be scoped to");
+  }
+  const what = target.description ?? [target.action, target.merchant].filter(Boolean).join(" ");
+  constraints.intent = `approve ${parent.mandate_id}${what ? ": " + what : ""}`;
+  return {
+    version: VERSION,
+    spec: SPEC,
+    mandate_id: opts.mandateId ?? randomUUID(),
+    subject: { agent_id: parent.subject.agent_id },
+    issued_at: iso(issued),
+    expires_at: iso(new Date(issued.getTime() + ttl * 60000)),
+    constraints,
+  };
 }

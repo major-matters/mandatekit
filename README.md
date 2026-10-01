@@ -69,6 +69,51 @@ intent-basket alignment ("do running shoes satisfy the stated intent?"), is
 **optional and injected**; a missing or failing model never turns a deny into an
 allow.
 
+## Actions, approval and step mandates (0.1.0)
+
+A payments mandate has three outcomes, not two: allowed without asking,
+step-up, declined. 0.1.0 adds that third state and the vocabulary a bank or a
+customer actually uses to delegate:
+
+```json
+"constraints": {
+  "categories": ["4900", "4814"],
+  "merchants": {"allow": ["MID-10231", "MID-10477"]},
+  "max_amount": {"value": 150000, "currency": "GBP"},
+  "actions": ["read", "draft", "submit", "pay", "cancel"],
+  "approval": {"actions": ["cancel"], "above": {"value": 20000, "currency": "GBP"}}
+}
+```
+
+- **`actions`** is an allow-list of verbs the agent may perform (the
+  transaction carries `"action": "pay"`). Presence-based like the other lists:
+  an empty list allows nothing, a missing verb is a deny. It is a filter, not a
+  scope: on its own it never makes an unbounded mandate acceptable.
+- **`approval`** names the verbs, and the amount threshold, that need a fresh
+  decision from the issuer. A transaction that passes every scope check but
+  trips an approval rule gets the verdict **`ask`** instead of `allow`. Treat
+  anything other than `allow` as not allowed.
+- **A step mandate** satisfies an `ask`. `step_mandate(parent, transaction)` /
+  `stepMandate(parent, transaction)` narrows the parent to exactly that
+  action, merchant, category and amount with a short validity window (15
+  minutes by default). The issuer signs it, the agent presents it as
+  `transaction["approval"]`, and the verifier re-checks it under the same
+  pinned keys: wrong signer, wrong agent, expired, or narrowed to a different
+  transaction all fail. This is AP2's human-present confirmation (an intent
+  mandate narrowed to a cart) and a payment flow's step-up, in the kit's own
+  format.
+
+Under a `max_amount` cap every transaction states its amount, so non-monetary
+verbs (cancel, read, submit) carry `{"value": 0, "currency": "..."}` rather
+than nothing. Verifiers older than 0.1.0 refuse mandates that use these keys,
+by design (unknown constraints fail closed).
+
+**Cross-walk to OAuth RAR.** `to_authorization_details(mandate)` /
+`toAuthorizationDetails(mandate)` renders a mandate as an RFC 9396
+`authorization_details` entry, the shape open-banking consent already rides
+on, so a bank's existing consent stack can read it. Draft mapping; the `type`
+is MandateKit's own until a registry assigns one.
+
 ## Gate an MCP server
 
 The fastest way to put a mandate to work is not a payment flow, it is a tool

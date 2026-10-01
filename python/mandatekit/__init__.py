@@ -25,17 +25,19 @@ Public surface:
 """
 
 from .compiler import compile, rule_based_parser
+from .crosswalk import to_authorization_details
 from .mandate import (
     MANDATE_SCHEMA,
     SPEC,
     VERSION,
     build_mandate,
+    step_mandate,
     validate,
 )
 from .signing import generate_keypair, sign_mandate, verify_signature
 from .verifier import verify
 
-__version__ = "0.0.1"
+__version__ = "0.1.0"
 
 __all__ = [
     "compile",
@@ -44,6 +46,8 @@ __all__ = [
     "sign_mandate",
     "verify_signature",
     "build_mandate",
+    "step_mandate",
+    "to_authorization_details",
     "validate",
     "rule_based_parser",
     "MANDATE_SCHEMA",

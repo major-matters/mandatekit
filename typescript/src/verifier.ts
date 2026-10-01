@@ -16,6 +16,12 @@ export interface Transaction {
   category?: string;
   amount?: { value: number; currency: string };
   description?: string;
+  /** The verb the agent wants to perform (read, draft, submit, pay, cancel,
+   *  share, ...). Checked against `constraints.actions` when present. */
+  action?: string;
+  /** A signed step mandate from the issuer, narrowed to this transaction,
+   *  presented to satisfy an "ask" verdict. See `stepMandate()`. */
+  approval?: SignedMandate;
 }
 
 export type IntentScorer = (intent: string, transaction: Transaction) => number;
@@ -27,8 +33,13 @@ interface Check {
   detail: string;
 }
 
+/** "ask" means every scope check passed but the mandate's approval rules want
+ *  a fresh issuer-signed step mandate for this transaction before it may run.
+ *  Treat anything other than "allow" as not allowed. */
+export type Decision = "allow" | "ask" | "deny";
+
 export interface Verdict {
-  decision: "allow" | "deny";
+  decision: Decision;
   signature_valid: boolean;
   scope_match_score: number;
   intent_alignment: number | null;
@@ -46,7 +57,9 @@ export interface VerifyOptions {
   allowUnverifiedIssuer?: boolean;
 }
 
-const KNOWN_CONSTRAINT_KEYS = new Set(["intent", "categories", "merchants", "max_amount"]);
+const KNOWN_CONSTRAINT_KEYS = new Set(["intent", "categories", "merchants", "max_amount", "actions", "approval"]);
+// `actions` is deliberately not a scoping key: an allow-list of verbs with no
+// category, merchant or amount limit is still unbounded in what it can reach.
 const SCOPING_KEYS = ["categories", "merchants", "max_amount"];
 const MAX_DEPTH = 64;
 const MAX_NODES = 10000;
@@ -95,7 +108,7 @@ function parseIsoStrict(s: unknown): number {
 }
 
 function verdict(
-  decision: "allow" | "deny",
+  decision: Decision,
   signatureValid: boolean,
   checks: Check[],
   mandate: Record<string, any>,
@@ -178,7 +191,7 @@ export function verify(
   // --- Category (presence-based; empty list allows nothing) ---
   if ("categories" in constraints) {
     const cats: unknown[] = Array.isArray(constraints.categories) ? constraints.categories : [];
-    const txnCat = (transaction.category ?? "").toLowerCase();
+    const txnCat = typeof transaction.category === "string" ? transaction.category.toLowerCase() : "";
     const ok = cats.map((c) => String(c).toLowerCase()).includes(txnCat);
     checks.push(check("category", ok, `${txnCat || "(none)"} ${ok ? "in" : "not in"} [${cats.join(", ")}]`));
   }
@@ -220,6 +233,67 @@ export function verify(
     }
   }
 
+  // --- Action verb (presence-based; empty list allows nothing) ---
+  if ("actions" in constraints) {
+    const acts: unknown[] = Array.isArray(constraints.actions) ? constraints.actions : [];
+    const txnAct = typeof transaction.action === "string" ? transaction.action.toLowerCase() : "";
+    const ok = acts.map((a) => String(a).toLowerCase()).includes(txnAct);
+    checks.push(check("action", ok, `action ${txnAct || "(none)"} ${ok ? "in" : "not in"} [${acts.join(", ")}]`));
+  }
+
+  // --- Approval (step-up): some verbs or amounts need a step mandate ---
+  let approvalRequired = false;
+  if ("approval" in constraints) {
+    const rawApproval = constraints.approval;
+    const approval =
+      rawApproval && typeof rawApproval === "object" && !Array.isArray(rawApproval) ? rawApproval : null;
+    if (approval === null) {
+      checks.push(check("approval", false, "malformed approval constraint"));
+    } else {
+      const reasons: string[] = [];
+      const askActs: unknown[] = Array.isArray(approval.actions) ? approval.actions : [];
+      const txnAct = typeof transaction.action === "string" ? transaction.action.toLowerCase() : "";
+      if (askActs.map((a) => String(a).toLowerCase()).includes(txnAct)) {
+        reasons.push(`action ${txnAct} needs approval`);
+      }
+      const above = approval.above;
+      if (above != null) {
+        const amt = transaction.amount;
+        if (!isInt(above.value) || !above.currency) {
+          reasons.push("malformed approval.above");
+        } else if (amt && amt.value != null) {
+          if (!isInt(amt.value) || amt.currency !== above.currency) {
+            reasons.push(`amount ${amt.value} ${amt.currency} cannot be compared with approval threshold ${above.value} ${above.currency}`);
+          } else if (amt.value > above.value) {
+            reasons.push(`${amt.value} ${amt.currency} > approval threshold ${above.value} ${above.currency}`);
+          }
+        }
+      }
+      if (reasons.length) {
+        const step = transaction.approval;
+        if (step == null) {
+          approvalRequired = true;
+          checks.push(check("approval", false, `approval required: ${reasons.join("; ")}`));
+        } else {
+          const { approval: _omit, ...target } = transaction;
+          void _omit;
+          const inner = withinLimits(step) && step && typeof step === "object" && (step as any).mandate
+            ? verify(step, target, { now, trustedKeys: opts.trustedKeys, allowUnverifiedIssuer: opts.allowUnverifiedIssuer })
+            : verdict("deny", false, [], {}, "malformed step mandate");
+          const stepAgent = (step as any)?.mandate?.subject?.agent_id;
+          const sameAgent = stepAgent != null && stepAgent === mandate?.subject?.agent_id;
+          if (inner.decision === "allow" && sameAgent) {
+            checks.push(check("approval", true, `step mandate ${inner.mandate_id} approves this transaction`));
+          } else if (inner.decision === "allow") {
+            checks.push(check("approval", false, "step mandate is for a different agent"));
+          } else {
+            checks.push(check("approval", false, `step mandate rejected: ${inner.rationale}`));
+          }
+        }
+      }
+    }
+  }
+
   // --- Intent-basket alignment (optional, injected) ---
   let intentAlignment: number | null = null;
   const intent: string | undefined = constraints.intent;
@@ -238,6 +312,9 @@ export function verify(
   if (!signatureValid) {
     return verdict("deny", false, checks, mandate,
       "signature invalid: the mandate was not signed by its claimed key or was altered after signing", intentAlignment);
+  }
+  if (failed.length === 1 && approvalRequired && failed[0].constraint === "approval") {
+    return verdict("ask", true, checks, mandate, "needs approval: " + failed[0].detail, intentAlignment);
   }
   if (failed.length) {
     return verdict("deny", true, checks, mandate, "out of scope: " + failed.map((c) => c.detail).join("; "), intentAlignment);
