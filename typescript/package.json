@@ -1,6 +1,6 @@
 {
   "name": "mandatekit",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Sign and verify scope-bound mandates for AI agents. v0, tracks the AP2 Verifiable Intent draft.",
   "type": "module",
   "license": "MIT",
@@ -33,10 +33,10 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "clean": "rm -rf dist",
-    "test": "node --test test/*.test.ts",
-    "test:build": "npm run build && node --test test/*.test.ts",
+    "test": "node --experimental-strip-types --test test/*.test.ts",
+    "test:build": "npm run build && node --experimental-strip-types --test test/*.test.ts",
     "prepublishOnly": "npm run clean && npm run build",
-    "demo": "node demo.ts"
+    "demo": "node --experimental-strip-types demo.ts"
   },
   "devDependencies": {
     "@types/node": "^22",

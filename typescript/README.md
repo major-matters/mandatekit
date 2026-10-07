@@ -11,17 +11,27 @@ package (RFC 8785), byte-identical to the Python SDK's `rfc8785` output.
 
 ## Requirements
 
-Node **22.6+** (the source runs `.ts` directly via Node's built-in type
-stripping, so there is no build step for local use). `npm run build` compiles to
-`dist/` with type declarations for bundlers and npm publishing.
+Node **22.6+**. The source runs `.ts` directly through Node's built-in type
+stripping, so there is no build step for local use. Type stripping is on by
+default from Node **22.18**; on 22.6 to 22.17 it needs the
+`--experimental-strip-types` flag, which the npm scripts pass, so `npm test`
+and `npm run demo` work on any 22.x. If you run a `.ts` file directly on an
+older 22.x, add the flag yourself: `node --experimental-strip-types demo.ts`.
+`npm run build` compiles to `dist/` with type declarations for bundlers and
+for the npm package, which needs no flag.
 
 ## Install
 
-Not yet on npm (v0). For now, clone and build from source:
+```bash
+npm install mandatekit
+```
+
+Or clone and build from source:
 
 ```bash
 git clone https://github.com/major-matters/mandatekit
 cd mandatekit/typescript && npm install && npm run build
+npm run demo          # one mandate, four transactions, a step mandate, the RFC 9396 export
 ```
 
 ## Quick start

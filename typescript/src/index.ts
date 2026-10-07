@@ -25,4 +25,4 @@ export type { Mandate, Constraints, Amount, Approval, StepTarget, StepOptions } 
 export { toAuthorizationDetails } from "./crosswalk.ts";
 export type { AuthorizationDetail } from "./crosswalk.ts";
 
-export const __version__ = "0.1.0";
+export const __version__ = "0.1.1";

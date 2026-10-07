@@ -2,6 +2,24 @@
 
 Notable changes to this repository.
 
+## 0.1.1 (2026-10-07)
+
+TypeScript package only; no change to the mandate format or the verifier.
+From a reviewer's run on Node 22.14.
+
+- `npm test`, `npm run test:build` and `npm run demo` now pass
+  `--experimental-strip-types`, so they work on Node 22.6 to 22.17 as the
+  README promised (type stripping is unflagged only from 22.18). The engines
+  field stays `>=22.6`.
+- `demo.ts` added: the `demo` script pointed at a file that was not in the
+  repository. One mandate, four transactions (allow, ask, deny), a
+  customer-signed step mandate, a tampered mandate, an untrusted key, and the
+  RFC 9396 export.
+- README: install from npm (the package has been there since 0.0.2; the
+  README still said it was not), and the Node version note above.
+- Published to npm as 0.1.1 (0.1.0 was tagged but never published; npm had
+  0.0.2 until this release).
+
 ## 0.1.0 (2026-10-01)
 
 Built for the Mandate Sandbox, the bank-facing demo of the five-kit suite.
