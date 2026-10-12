@@ -2,6 +2,97 @@
 
 Notable changes to this repository.
 
+## 0.2.0 (2026-10-12)
+
+Per-verb counterparty scope, time windows, usage limits, revocation and
+delegation, in Python and TypeScript with identical verdicts and reason codes:
+both suites replay the same `fixtures/verdict-matrix.json` (71 cases, 108
+verdicts), and the TypeScript suite re-signs every Python-signed envelope in it
+to prove the signatures are byte-identical. Built from the Bench evidence: in
+entries two and three the one action that slipped past every layer was
+`pay harbourline £84.00`, because the bank sat on every job's flat allow list.
+
+- Wire version `mandatekit/v0.2`. The verifier accepts `mandatekit/v0` and
+  `mandatekit/v0.2`; any other version is denied (`version`), and a `v0`
+  mandate that carries a 0.2 key is denied as unenforceable under its version
+  (`constraints_enforceable`). `validate` and the JSON Schema accept both.
+  Every 0.2 field lives under `constraints`, so a 0.1 verifier refuses a 0.2
+  mandate (unknown constraint keys) rather than ignoring its window start,
+  limits, revocation list or chain.
+- New constraint `counterparties`: `{"<id>": ["read", "submit", ...]}`, the
+  verbs allowed at each counterparty. A verb not in the list, or a
+  counterparty not in the map, is denied with `counterparty_scope`. The bank
+  can be a counterparty for read, submit and transfer without becoming a valid
+  payee. The 0.1 flat `merchants.allow` still works and means every allowed
+  verb; when both are present both must pass. Counts as scope.
+- New constraint `not_before`: denied before the window opens (`not_before`),
+  as before after it closes (`not_expired`). Malformed is a deny.
+- New constraint `limits`: `max_uses`, `max_total_amount`, and per
+  `window_seconds` `max_uses_per_window` and `max_amount_per_window`, with an
+  optional `actions` filter saying which verbs count (so one `pay` per job
+  leaves reads alone). Enforced only against a caller-supplied store
+  (`store=` / `store:`); a mandate that declares limits with no store is
+  denied (`limits_store`), as is a store that throws or returns a malformed
+  record. The limit that would be crossed is the reason code (`max_uses`,
+  `max_total_amount`, `max_uses_per_window`, `max_amount_per_window`); a
+  malformed `limits` object is `limits`. A use counts while it is less than
+  `window_seconds` old. `record_use` / `recordUse(signed, txn, store, now)`
+  writes a use under the mandate's id and every ancestor's; the verifier only
+  reads. `InMemoryUsageStore` is the reference store. Time is injected: every
+  `verify` and `record_use` in the tests passes `now`.
+- New constraint `revocation`: `{"list_id": ..., "max_age_seconds"?: ...}`.
+  The caller supplies signed lists in `revocation_lists=` /
+  `revocationLists:`; the verifier accepts a copy only if its signature
+  verifies and the signer is the mandate's own issuer or a pinned trusted key,
+  and (with `max_age_seconds`) it is fresh enough. The mandate's id on a valid
+  copy is `revoked`; a declared list that is missing, forged, altered, stale,
+  malformed or under another id is `revocation_list`. New
+  `build_revocation_list`, `sign_revocation_list`,
+  `verify_revocation_list_signature` and their camelCase twins; the list
+  envelope is the mandate envelope under the key `list`, version
+  `mandatekit/revocation-list/v0.2`.
+- New constraint `delegation`. A root opts in with `{"max_depth": n}` and
+  names the delegate's key in `subject.public_key`; a child, built with
+  `delegate_mandate` / `delegateMandate(parentSigned, ...)` and signed by that
+  key, carries `{"parent": <signed parent>}`. `verify` walks the chain to the
+  root, which must be signed by a trusted key, and denies unless every link is
+  signed by its parent's subject key, the parent opted in with depth to
+  spare, and the child only narrows: categories, caps, counterparties and
+  verbs (on effective per-counterparty scope, so a flat list under a per-verb
+  parent is a widening), deny lists, approval rules for verbs the child can
+  still reach, and a window inside the parent's (`delegation` for structure
+  and signatures, `delegation_scope` for widening, with the field named).
+  Each link's revocation list and limits apply, so a revoked parent takes its
+  children with it and a parent's `max_uses` counts the children's uses.
+  Editing any link breaks the leaf's signature, since the parent travels
+  inside the child's signed bytes. Chains longer than eight links are refused.
+- Reason codes are stable and exported as `REASON_CODES`; the README lists
+  them. New: `version`, `counterparty_scope`, `not_before`, `limits`,
+  `limits_store`, `max_uses`, `max_total_amount`, `max_uses_per_window`,
+  `max_amount_per_window`, `revocation_list`, `revoked`, `delegation`,
+  `delegation_scope`.
+- RFC 9396 export: `type` is now `mandatekit:mandate:v0.2`; `valid_from` is
+  `not_before` when present; `locations` falls back to the sorted counterparty
+  ids; `counterparties`, `limits`, `revocation`, `subject.public_key` and a
+  `delegation` summary (the parent's id, `max_depth`) travel as type-specific
+  fields.
+- `mandatekit-mcp` keeps an in-memory store for the session and records every
+  forwarded call, so `limits` hold across a session; `--revocation-list`
+  (repeatable) supplies signed lists. The CLI's `verify` gains
+  `--revocation-list`; it holds no state, so a mandate with `limits` is
+  denied there by design.
+- Tests: Python 67 to 100 (new `test_v02.py` with 29, two more property tests,
+  two MCP tests), TypeScript 47 to 149 (new `v02.test.ts`, which also replays
+  the fixture case by case, two more property tests). CI runs every Python
+  file standalone, including the dependency-free job.
+- Versions aligned at 0.2.0: pyproject.toml, `__version__`, package.json, the
+  exported `__version__`, and the package-lock root entry (which still read
+  0.0.1).
+- Not changed: the MCP proxy still does not map tool calls onto `actions`
+  (6.4); intent alignment still fails open; a step mandate is still signed by
+  a trusted key, including for a delegated child; the store is in memory and
+  per process (a persistent store is 6.3); the CLI cannot enforce limits.
+
 ## 0.1.1 (2026-10-07)
 
 TypeScript package only; no change to the mandate format or the verifier.

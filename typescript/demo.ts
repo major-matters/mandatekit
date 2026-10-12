@@ -5,7 +5,7 @@
 
 import {
   buildMandate, signMandate, stepMandate, verify, toAuthorizationDetails,
-  generateKeypair, type Transaction,
+  generateKeypair, recordUse, InMemoryUsageStore, type Transaction,
 } from "./src/index.ts";
 
 const LINE = "-".repeat(64);
@@ -68,6 +68,37 @@ console.log(`  verify() with no trusted keys at all            -> ${n.decision.t
 
 banner("5. The same mandate as RFC 9396 authorization_details");
 console.log(JSON.stringify(toAuthorizationDetails(mandate), null, 2).split("\n").map((l) => "  " + l).join("\n"));
+
+banner("6. 0.2: the bank as a counterparty for read and submit, never as a payee");
+// Under the flat allow list above, a payment to the bank passes the merchant check
+// (the slip the Bench recorded). Per-verb scope closes it, and a usage limit holds
+// the agent to one payment, counted in a store you supply.
+const scoped = buildMandate({
+  agentId: "did:key:demo-agent",
+  intent: "Pay the energy bill",
+  categories: ["bank", "4900"],
+  counterparties: { harbourline: ["read", "submit"], "MID-10231": ["read", "pay"] },
+  maxAmount: gbp(15000),
+  actions: ["read", "submit", "pay"],
+  limits: { actions: ["pay"], max_uses: 1 },
+  issuedAt: new Date(),
+  ttlDays: 1,
+  mandateId: "demo-pay-bill-0.2",
+});
+const signedScoped = signMandate(scoped, customer.privateKey);
+const store = new InMemoryUsageStore();
+const show2 = (label: string, t: Transaction, withStore = true) => {
+  const v = verify(signedScoped, t, { trustedKeys, store: withStore ? store : undefined });
+  const failed = v.failed.map((c) => c.constraint).join(", ");
+  console.log(`  ${label.padEnd(44)} -> ${v.decision.toUpperCase().padEnd(5)} ${failed ? `(${failed})` : ""}`);
+  return v;
+};
+show2("pay £84.00 to the bank", txn("pay", "harbourline", "bank", 8400));
+show2("pay £118.40 to Thames Energy, no store", txn("pay", "MID-10231", "4900", 11840), false);
+const first = show2("pay £118.40 to Thames Energy", txn("pay", "MID-10231", "4900", 11840));
+if (first.decision === "allow") recordUse(signedScoped, txn("pay", "MID-10231", "4900", 11840), store);
+show2("pay £118.40 again (the second in-cap payment)", txn("pay", "MID-10231", "4900", 11840));
+show2("read the bank statement (reads do not count)", txn("read", "harbourline", "bank", 0));
 
 banner("Mandate before the action. BudgetGuard during it. Witness after.");
 console.log("  github.com/major-matters  ·  majorlabs.co\n");

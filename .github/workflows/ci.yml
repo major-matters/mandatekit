@@ -25,6 +25,15 @@ jobs:
       - name: Unit tests
         working-directory: python
         run: PYTHONPATH=. python tests/test_mandatekit.py
+      - name: Step-up tests (0.1)
+        working-directory: python
+        run: PYTHONPATH=. python tests/test_stepup.py
+      - name: Scope, windows, limits, revocation, delegation (0.2) + shared fixture
+        working-directory: python
+        run: PYTHONPATH=. python tests/test_v02.py
+      - name: MCP proxy tests
+        working-directory: python
+        run: PYTHONPATH=. python -m unittest tests.test_mcp
       - name: Property tests (Hypothesis)
         working-directory: python
         run: PYTHONPATH=. python tests/test_properties.py
@@ -42,7 +51,7 @@ jobs:
           python-version: "3.12"
       - name: Unit tests with NO optional deps (pure-Python Ed25519 + sorted-JSON fallback)
         working-directory: python
-        run: PYTHONPATH=. python tests/test_mandatekit.py
+        run: PYTHONPATH=. python tests/test_mandatekit.py && PYTHONPATH=. python tests/test_stepup.py && PYTHONPATH=. python tests/test_v02.py
 
   typescript:
     name: TypeScript (Node 22)

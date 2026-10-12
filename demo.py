@@ -13,7 +13,7 @@ Nothing here touches the network; the LLM layer is not used.
 import json
 from datetime import datetime, timezone
 
-from mandatekit import compile, generate_keypair, verify
+from mandatekit import InMemoryUsageStore, build_mandate, compile, generate_keypair, record_use, sign_mandate, verify
 
 LINE = "-" * 72
 
@@ -71,5 +71,34 @@ for score in (0.1, 0.9):
     v = verify(signed, txn, now=NOW, trusted_keys=[public_key],
                intent_scorer=lambda intent, t: score)
     print(f"  intent alignment {score} -> {v['decision'].upper()}  ({v['rationale']})")
+
+show("6. 0.2: the bank as a counterparty for read and submit, never as a payee")
+# A flat allow list lets a payment to the bank through the merchant check (the slip
+# the Bench recorded). Per-verb scope closes it; a usage limit, counted in a store
+# you supply, holds the agent to one payment.
+scoped = build_mandate(
+    agent_id="agent-7", intent="pay the energy bill", categories=["bank", "4900"],
+    counterparties={"harbourline": ["read", "submit"], "MID-10231": ["read", "pay"]},
+    max_amount={"value": 15000, "currency": "GBP"}, actions=["read", "submit", "pay"],
+    limits={"actions": ["pay"], "max_uses": 1}, issued_at=NOW, ttl_days=1, mandate_id="demo-pay-bill-0.2",
+)
+signed_scoped = sign_mandate(scoped, private_key)
+store = InMemoryUsageStore()
+gbp = lambda pence: {"value": pence, "currency": "GBP"}  # noqa: E731
+pay_thames = {"action": "pay", "merchant": "MID-10231", "category": "4900", "amount": gbp(11840)}
+for label, t, st in [
+    ("pay £84.00 to the bank", {"action": "pay", "merchant": "harbourline", "category": "bank", "amount": gbp(8400)}, store),
+    ("pay £118.40 to Thames Energy, no store", pay_thames, None),
+    ("pay £118.40 to Thames Energy", pay_thames, store),
+]:
+    v = verify(signed_scoped, t, now=NOW, trusted_keys=[public_key], store=st)
+    print(f"  [{'ALLOW' if v['decision'] == 'allow' else 'DENY '}] {label:<40} {[c['constraint'] for c in v['failed']]}")
+    if v["decision"] == "allow":
+        record_use(signed_scoped, t, store, now=NOW)
+v = verify(signed_scoped, pay_thames, now=NOW, trusted_keys=[public_key], store=store)
+print(f"  [{'ALLOW' if v['decision'] == 'allow' else 'DENY '}] {'pay £118.40 again (second in-cap payment)':<40} {[c['constraint'] for c in v['failed']]}")
+v = verify(signed_scoped, {"action": "read", "merchant": "harbourline", "category": "bank", "amount": gbp(0)},
+           now=NOW, trusted_keys=[public_key], store=store)
+print(f"  [{'ALLOW' if v['decision'] == 'allow' else 'DENY '}] {'read the bank statement (reads do not count)':<40} {[c['constraint'] for c in v['failed']]}")
 
 print(f"\n{LINE}\nThat is MandateKit v0: compile -> sign -> verify, deterministic and local.\n{LINE}")

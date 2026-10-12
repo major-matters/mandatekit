@@ -1,0 +1,8241 @@
+{
+ "description": "MandateKit 0.2 verdict matrix. Both test suites (python/tests/test_v02.py and typescript/test/v02.test.ts) replay every case: build a fresh in-memory store when `store` is true, pin the named trusted keys, supply the listed revocation lists, run the steps in order, and compare the decision and the sorted reason codes in `failed` (and `signature_valid` where given). Envelopes were signed by the Python SDK; the TypeScript suite re-signs each one with the same seed and checks the bytes match. Every step carries an explicit `now` or uses the fixture's; nothing depends on a wall clock. Seeds are test values, never real keys.",
+ "generated_by": "fixtures/generate_verdict_matrix.py",
+ "now": "2026-10-12T12:00:00Z",
+ "seeds": {
+  "issuer": "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f",
+  "delegate": "202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f",
+  "grandchild": "404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f",
+  "stranger": "636261605f5e5d5c5b5a595857565554535251504f4e4d4c4b4a494847464544"
+ },
+ "keys": {
+  "issuer": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+  "delegate": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc=",
+  "grandchild": "JUO5L/EJVRFHatyDadtt3JM2ZaEZeN2hQE7hBmypVZ0=",
+  "stranger": "a/LUxZOREoNb/fwttS8rnbc1+rVPYnP+QUm2UFvXaUY="
+ },
+ "cases": [
+  {
+   "name": "per-verb scope: the bank is a counterparty for read, submit and transfer, never a payee",
+   "signer": "issuer",
+   "mandate": {
+    "mandate": {
+     "version": "mandatekit/v0.2",
+     "spec": "AP2-draft-2026Q2",
+     "mandate_id": "m-scoped",
+     "subject": {
+      "agent_id": "agent-tidy",
+      "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc="
+     },
+     "issued_at": "2026-10-11T12:00:00Z",
+     "expires_at": "2026-10-19T12:00:00Z",
+     "constraints": {
+      "intent": "pay the energy bill",
+      "categories": [
+       "bank",
+       "4900"
+      ],
+      "counterparties": {
+       "harbourline": [
+        "read",
+        "submit",
+        "transfer"
+       ],
+       "MID-10231": [
+        "read",
+        "draft",
+        "pay"
+       ]
+      },
+      "max_amount": {
+       "value": 15000,
+       "currency": "GBP"
+      },
+      "actions": [
+       "read",
+       "draft",
+       "submit",
+       "pay",
+       "transfer"
+      ],
+      "approval": {
+       "actions": [
+        "submit"
+       ]
+      }
+     }
+    },
+    "signature": {
+     "alg": "Ed25519",
+     "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+     "value": "v47SqSxzHzyOP6xTOOg4myKNctVjU7wNotmNwj4+sobVV/g+iiE6Xu6bOszW9d3WWARCpf+ocUhvN3KkFW0sCg=="
+    }
+   },
+   "trusted": [
+    "issuer"
+   ],
+   "store": false,
+   "revocation_lists": [],
+   "steps": [
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "MID-10231",
+      "category": "4900",
+      "amount": {
+       "value": 11840,
+       "currency": "GBP"
+      },
+      "action": "pay"
+     },
+     "expect": {
+      "decision": "allow",
+      "failed": []
+     }
+    },
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "harbourline",
+      "category": "bank",
+      "amount": {
+       "value": 8400,
+       "currency": "GBP"
+      },
+      "action": "pay"
+     },
+     "expect": {
+      "decision": "deny",
+      "failed": [
+       "counterparty_scope"
+      ]
+     },
+     "note": "the slip from Bench entries two and three"
+    },
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "harbourline",
+      "category": "bank",
+      "amount": {
+       "value": 8400,
+       "currency": "GBP"
+      },
+      "action": "transfer"
+     },
+     "expect": {
+      "decision": "allow",
+      "failed": []
+     }
+    },
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "harbourline",
+      "category": "bank",
+      "amount": {
+       "value": 0,
+       "currency": "GBP"
+      },
+      "action": "submit"
+     },
+     "expect": {
+      "decision": "ask",
+      "failed": [
+       "approval"
+      ]
+     }
+    },
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "harbourline",
+      "category": "bank",
+      "amount": {
+       "value": 0,
+       "currency": "GBP"
+      },
+      "action": "read"
+     },
+     "expect": {
+      "decision": "allow",
+      "failed": []
+     }
+    },
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "MID-41120",
+      "category": "5411",
+      "amount": {
+       "value": 1000,
+       "currency": "GBP"
+      },
+      "action": "pay"
+     },
+     "expect": {
+      "decision": "deny",
+      "failed": [
+       "category",
+       "counterparty_scope"
+      ]
+     }
+    },
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "MID-10231",
+      "category": "4900",
+      "amount": {
+       "value": 11840,
+       "currency": "GBP"
+      }
+     },
+     "expect": {
+      "decision": "deny",
+      "failed": [
+       "action",
+       "counterparty_scope"
+      ]
+     },
+     "note": "no verb at all"
+    },
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "MID-10231",
+      "category": "4900",
+      "amount": {
+       "value": 100,
+       "currency": "GBP"
+      },
+      "action": "transfer"
+     },
+     "expect": {
+      "decision": "deny",
+      "failed": [
+       "counterparty_scope"
+      ]
+     }
+    },
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "MID-10231",
+      "category": "4900",
+      "amount": {
+       "value": 100,
+       "currency": "GBP"
+      },
+      "action": "PAY"
+     },
+     "expect": {
+      "decision": "allow",
+      "failed": []
+     },
+     "note": "verbs compare case-insensitively"
+    }
+   ]
+  },
+  {
+   "name": "0.1 flat allow list still works and means every allowed verb (why the slip happened)",
+   "signer": "issuer",
+   "mandate": {
+    "mandate": {
+     "version": "mandatekit/v0.2",
+     "spec": "AP2-draft-2026Q2",
+     "mandate_id": "m-flat",
+     "subject": {
+      "agent_id": "agent-tidy",
+      "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc="
+     },
+     "issued_at": "2026-10-11T12:00:00Z",
+     "expires_at": "2026-10-19T12:00:00Z",
+     "constraints": {
+      "intent": "pay the energy bill",
+      "categories": [
+       "bank",
+       "4900"
+      ],
+      "merchants": {
+       "allow": [
+        "harbourline",
+        "MID-10231"
+       ]
+      },
+      "max_amount": {
+       "value": 15000,
+       "currency": "GBP"
+      },
+      "actions": [
+       "read",
+       "draft",
+       "submit",
+       "pay",
+       "transfer"
+      ],
+      "approval": {
+       "actions": [
+        "submit"
+       ]
+      }
+     }
+    },
+    "signature": {
+     "alg": "Ed25519",
+     "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+     "value": "FPm+BOtuyDnDSJvXgNZBJe4BkxRBhNgk6At45f92L/frQBmV4+VUHAK1zdooRghSP5do5FLhJixXNYn47603AA=="
+    }
+   },
+   "trusted": [
+    "issuer"
+   ],
+   "store": false,
+   "revocation_lists": [],
+   "steps": [
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "harbourline",
+      "category": "bank",
+      "amount": {
+       "value": 8400,
+       "currency": "GBP"
+      },
+      "action": "pay"
+     },
+     "expect": {
+      "decision": "allow",
+      "failed": []
+     }
+    },
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "MID-10231",
+      "category": "4900",
+      "amount": {
+       "value": 11840,
+       "currency": "GBP"
+      },
+      "action": "pay"
+     },
+     "expect": {
+      "decision": "allow",
+      "failed": []
+     }
+    },
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "MID-41120",
+      "category": "5411",
+      "amount": {
+       "value": 1000,
+       "currency": "GBP"
+      },
+      "action": "pay"
+     },
+     "expect": {
+      "decision": "deny",
+      "failed": [
+       "category",
+       "merchant_allow"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "flat list and per-verb scope together: both must pass",
+   "signer": "issuer",
+   "mandate": {
+    "mandate": {
+     "version": "mandatekit/v0.2",
+     "spec": "AP2-draft-2026Q2",
+     "mandate_id": "m-both",
+     "subject": {
+      "agent_id": "agent-tidy",
+      "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc="
+     },
+     "issued_at": "2026-10-11T12:00:00Z",
+     "expires_at": "2026-10-19T12:00:00Z",
+     "constraints": {
+      "intent": "pay the energy bill",
+      "categories": [
+       "bank",
+       "4900"
+      ],
+      "merchants": {
+       "allow": [
+        "MID-10231"
+       ]
+      },
+      "counterparties": {
+       "harbourline": [
+        "read"
+       ],
+       "MID-10231": [
+        "pay"
+       ]
+      },
+      "max_amount": {
+       "value": 15000,
+       "currency": "GBP"
+      },
+      "actions": [
+       "read",
+       "draft",
+       "submit",
+       "pay",
+       "transfer"
+      ],
+      "approval": {
+       "actions": [
+        "submit"
+       ]
+      }
+     }
+    },
+    "signature": {
+     "alg": "Ed25519",
+     "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+     "value": "9AcevkwufHenc/+T7p/xtPFFcAvzHk9+MsuNH8SMnGllasGoJ32Ih6tWoaRxlxqg5/GrQPw+51jcaBWRGcCzBA=="
+    }
+   },
+   "trusted": [
+    "issuer"
+   ],
+   "store": false,
+   "revocation_lists": [],
+   "steps": [
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "harbourline",
+      "category": "bank",
+      "amount": {
+       "value": 0,
+       "currency": "GBP"
+      },
+      "action": "read"
+     },
+     "expect": {
+      "decision": "deny",
+      "failed": [
+       "merchant_allow"
+      ]
+     }
+    },
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "MID-10231",
+      "category": "4900",
+      "amount": {
+       "value": 100,
+       "currency": "GBP"
+      },
+      "action": "pay"
+     },
+     "expect": {
+      "decision": "allow",
+      "failed": []
+     }
+    },
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "MID-10231",
+      "category": "4900",
+      "amount": {
+       "value": 0,
+       "currency": "GBP"
+      },
+      "action": "read"
+     },
+     "expect": {
+      "decision": "deny",
+      "failed": [
+       "counterparty_scope"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "an empty verb list allows nothing at that counterparty",
+   "signer": "issuer",
+   "mandate": {
+    "mandate": {
+     "version": "mandatekit/v0.2",
+     "spec": "AP2-draft-2026Q2",
+     "mandate_id": "m-empty-verbs",
+     "subject": {
+      "agent_id": "agent-tidy",
+      "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc="
+     },
+     "issued_at": "2026-10-11T12:00:00Z",
+     "expires_at": "2026-10-19T12:00:00Z",
+     "constraints": {
+      "intent": "pay the energy bill",
+      "categories": [
+       "bank",
+       "4900"
+      ],
+      "counterparties": {
+       "harbourline": []
+      },
+      "max_amount": {
+       "value": 15000,
+       "currency": "GBP"
+      },
+      "actions": [
+       "read",
+       "draft",
+       "submit",
+       "pay",
+       "transfer"
+      ],
+      "approval": {
+       "actions": [
+        "submit"
+       ]
+      }
+     }
+    },
+    "signature": {
+     "alg": "Ed25519",
+     "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+     "value": "nO8OLZAhYQpF9J9dYqx2gRiF72NBtI+ft0B3LlIXoDQZ6R94h4EFV2St5o362Z9D7vfdNQxGh7pXsf5dzvN8BQ=="
+    }
+   },
+   "trusted": [
+    "issuer"
+   ],
+   "store": false,
+   "revocation_lists": [],
+   "steps": [
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "harbourline",
+      "category": "bank",
+      "amount": {
+       "value": 0,
+       "currency": "GBP"
+      },
+      "action": "read"
+     },
+     "expect": {
+      "decision": "deny",
+      "failed": [
+       "counterparty_scope"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "malformed counterparties (a list) is a deny, never an exception",
+   "signer": "issuer",
+   "mandate": {
+    "mandate": {
+     "version": "mandatekit/v0.2",
+     "spec": "AP2-draft-2026Q2",
+     "mandate_id": "m-bad-cps",
+     "subject": {
+      "agent_id": "agent-tidy",
+      "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc="
+     },
+     "issued_at": "2026-10-11T12:00:00Z",
+     "expires_at": "2026-10-19T12:00:00Z",
+     "constraints": {
+      "intent": "pay the energy bill",
+      "categories": [
+       "bank",
+       "4900"
+      ],
+      "counterparties": [
+       "harbourline",
+       "MID-10231"
+      ],
+      "max_amount": {
+       "value": 15000,
+       "currency": "GBP"
+      },
+      "actions": [
+       "read",
+       "draft",
+       "submit",
+       "pay",
+       "transfer"
+      ],
+      "approval": {
+       "actions": [
+        "submit"
+       ]
+      }
+     }
+    },
+    "signature": {
+     "alg": "Ed25519",
+     "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+     "value": "M0cd44FZqy9KYzzZ5krAeZqEQAPRTSRQT2vjE4x1ZtkQIO2k9J/pDCu/S5YjK2t91nOe6XjQJ3mbPnwwGrkdCQ=="
+    }
+   },
+   "trusted": [
+    "issuer"
+   ],
+   "store": false,
+   "revocation_lists": [],
+   "steps": [
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "harbourline",
+      "category": "bank",
+      "amount": {
+       "value": 0,
+       "currency": "GBP"
+      },
+      "action": "read"
+     },
+     "expect": {
+      "decision": "deny",
+      "failed": [
+       "counterparty_scope"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "not_before: denied before the window opens, allowed inside, denied after expiry",
+   "signer": "issuer",
+   "mandate": {
+    "mandate": {
+     "version": "mandatekit/v0.2",
+     "spec": "AP2-draft-2026Q2",
+     "mandate_id": "m-window",
+     "subject": {
+      "agent_id": "agent-tidy",
+      "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc="
+     },
+     "issued_at": "2026-10-11T12:00:00Z",
+     "expires_at": "2026-10-19T12:00:00Z",
+     "constraints": {
+      "intent": "pay the energy bill",
+      "categories": [
+       "bank",
+       "4900"
+      ],
+      "counterparties": {
+       "harbourline": [
+        "read",
+        "submit",
+        "transfer"
+       ],
+       "MID-10231": [
+        "read",
+        "draft",
+        "pay"
+       ]
+      },
+      "max_amount": {
+       "value": 15000,
+       "currency": "GBP"
+      },
+      "actions": [
+       "read",
+       "draft",
+       "submit",
+       "pay",
+       "transfer"
+      ],
+      "approval": {
+       "actions": [
+        "submit"
+       ]
+      },
+      "not_before": "2026-10-12T13:00:00Z"
+     }
+    },
+    "signature": {
+     "alg": "Ed25519",
+     "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+     "value": "465zZgduiqPsMgzbpwFEay6B5tXmzHMuPZlcO93sqJ97+TP9Ye00wfKj+F06KI/lyfI9my2Thn+OpqNHbBNYAA=="
+    }
+   },
+   "trusted": [
+    "issuer"
+   ],
+   "store": false,
+   "revocation_lists": [],
+   "steps": [
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "harbourline",
+      "category": "bank",
+      "amount": {
+       "value": 0,
+       "currency": "GBP"
+      },
+      "action": "read"
+     },
+     "expect": {
+      "decision": "deny",
+      "failed": [
+       "not_before"
+      ]
+     },
+     "now": "2026-10-12T12:00:00Z"
+    },
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "harbourline",
+      "category": "bank",
+      "amount": {
+       "value": 0,
+       "currency": "GBP"
+      },
+      "action": "read"
+     },
+     "expect": {
+      "decision": "allow",
+      "failed": []
+     },
+     "now": "2026-10-12T13:00:00Z",
+     "note": "the boundary instant is inside"
+    },
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "harbourline",
+      "category": "bank",
+      "amount": {
+       "value": 0,
+       "currency": "GBP"
+      },
+      "action": "read"
+     },
+     "expect": {
+      "decision": "allow",
+      "failed": []
+     },
+     "now": "2026-10-12T14:00:00Z"
+    },
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "harbourline",
+      "category": "bank",
+      "amount": {
+       "value": 0,
+       "currency": "GBP"
+      },
+      "action": "read"
+     },
+     "expect": {
+      "decision": "deny",
+      "failed": [
+       "not_expired"
+      ]
+     },
+     "now": "2026-10-20T12:00:00Z"
+    }
+   ]
+  },
+  {
+   "name": "a non-ISO not_before is a deny",
+   "signer": "issuer",
+   "mandate": {
+    "mandate": {
+     "version": "mandatekit/v0.2",
+     "spec": "AP2-draft-2026Q2",
+     "mandate_id": "m-bad-nb",
+     "subject": {
+      "agent_id": "agent-tidy",
+      "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc="
+     },
+     "issued_at": "2026-10-11T12:00:00Z",
+     "expires_at": "2026-10-19T12:00:00Z",
+     "constraints": {
+      "intent": "pay the energy bill",
+      "categories": [
+       "bank",
+       "4900"
+      ],
+      "counterparties": {
+       "harbourline": [
+        "read",
+        "submit",
+        "transfer"
+       ],
+       "MID-10231": [
+        "read",
+        "draft",
+        "pay"
+       ]
+      },
+      "max_amount": {
+       "value": 15000,
+       "currency": "GBP"
+      },
+      "actions": [
+       "read",
+       "draft",
+       "submit",
+       "pay",
+       "transfer"
+      ],
+      "approval": {
+       "actions": [
+        "submit"
+       ]
+      },
+      "not_before": "next tuesday"
+     }
+    },
+    "signature": {
+     "alg": "Ed25519",
+     "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+     "value": "4WEhSz2JUJZh4jreeBf7GenYaxNpwbh/LMwDqlEOkro932JspV9EqXRutH7edmCWGoOFgT4+WOzFwg+IhAIQBw=="
+    }
+   },
+   "trusted": [
+    "issuer"
+   ],
+   "store": false,
+   "revocation_lists": [],
+   "steps": [
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "harbourline",
+      "category": "bank",
+      "amount": {
+       "value": 0,
+       "currency": "GBP"
+      },
+      "action": "read"
+     },
+     "expect": {
+      "decision": "deny",
+      "failed": [
+       "not_before"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "a window that never opens denies on both edges",
+   "signer": "issuer",
+   "mandate": {
+    "mandate": {
+     "version": "mandatekit/v0.2",
+     "spec": "AP2-draft-2026Q2",
+     "mandate_id": "m-never",
+     "subject": {
+      "agent_id": "agent-tidy",
+      "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc="
+     },
+     "issued_at": "2026-10-11T12:00:00Z",
+     "expires_at": "2026-10-19T12:00:00Z",
+     "constraints": {
+      "intent": "pay the energy bill",
+      "categories": [
+       "bank",
+       "4900"
+      ],
+      "counterparties": {
+       "harbourline": [
+        "read",
+        "submit",
+        "transfer"
+       ],
+       "MID-10231": [
+        "read",
+        "draft",
+        "pay"
+       ]
+      },
+      "max_amount": {
+       "value": 15000,
+       "currency": "GBP"
+      },
+      "actions": [
+       "read",
+       "draft",
+       "submit",
+       "pay",
+       "transfer"
+      ],
+      "approval": {
+       "actions": [
+        "submit"
+       ]
+      },
+      "not_before": "2026-11-11T12:00:00Z"
+     }
+    },
+    "signature": {
+     "alg": "Ed25519",
+     "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+     "value": "PRtpFX2Qt43AFh3Ilx91zHIzObB3DBDc4cHO1UxhZkvA3RCIZXS3nEi22Uj9qJnwOJ6AZbu0Y71ufBp89r6kAg=="
+    }
+   },
+   "trusted": [
+    "issuer"
+   ],
+   "store": false,
+   "revocation_lists": [],
+   "steps": [
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "harbourline",
+      "category": "bank",
+      "amount": {
+       "value": 0,
+       "currency": "GBP"
+      },
+      "action": "read"
+     },
+     "expect": {
+      "decision": "deny",
+      "failed": [
+       "not_before"
+      ]
+     },
+     "now": "2026-10-12T12:00:00Z"
+    },
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "harbourline",
+      "category": "bank",
+      "amount": {
+       "value": 0,
+       "currency": "GBP"
+      },
+      "action": "read"
+     },
+     "expect": {
+      "decision": "deny",
+      "failed": [
+       "not_before",
+       "not_expired"
+      ]
+     },
+     "now": "2026-10-20T12:00:00Z"
+    }
+   ]
+  },
+  {
+   "name": "a mandatekit/v0 mandate with v0 keys verifies",
+   "signer": "issuer",
+   "mandate": {
+    "mandate": {
+     "version": "mandatekit/v0",
+     "spec": "AP2-draft-2026Q2",
+     "mandate_id": "m-v0",
+     "subject": {
+      "agent_id": "agent-tidy",
+      "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc="
+     },
+     "issued_at": "2026-10-11T12:00:00Z",
+     "expires_at": "2026-10-19T12:00:00Z",
+     "constraints": {
+      "intent": "pay the energy bill",
+      "categories": [
+       "bank",
+       "4900"
+      ],
+      "merchants": {
+       "allow": [
+        "harbourline",
+        "MID-10231"
+       ]
+      },
+      "max_amount": {
+       "value": 15000,
+       "currency": "GBP"
+      },
+      "actions": [
+       "read",
+       "draft",
+       "submit",
+       "pay",
+       "transfer"
+      ],
+      "approval": {
+       "actions": [
+        "submit"
+       ]
+      }
+     }
+    },
+    "signature": {
+     "alg": "Ed25519",
+     "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+     "value": "b5shWoRR2PmOJ4ReaRay8xSDe2jcw4I3Ol/FDx2NcrZTJ10eJ1/rUzwLtuwoaLkbc5erOyIwnEqvABrnmln0DA=="
+    }
+   },
+   "trusted": [
+    "issuer"
+   ],
+   "store": false,
+   "revocation_lists": [],
+   "steps": [
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "MID-10231",
+      "category": "4900",
+      "amount": {
+       "value": 11840,
+       "currency": "GBP"
+      },
+      "action": "pay"
+     },
+     "expect": {
+      "decision": "allow",
+      "failed": []
+     }
+    }
+   ]
+  },
+  {
+   "name": "a mandatekit/v0 mandate carrying 0.2 keys is unenforceable under its version",
+   "signer": "issuer",
+   "mandate": {
+    "mandate": {
+     "version": "mandatekit/v0",
+     "spec": "AP2-draft-2026Q2",
+     "mandate_id": "m-v0-newkeys",
+     "subject": {
+      "agent_id": "agent-tidy",
+      "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc="
+     },
+     "issued_at": "2026-10-11T12:00:00Z",
+     "expires_at": "2026-10-19T12:00:00Z",
+     "constraints": {
+      "intent": "pay the energy bill",
+      "categories": [
+       "bank",
+       "4900"
+      ],
+      "counterparties": {
+       "harbourline": [
+        "read",
+        "submit",
+        "transfer"
+       ],
+       "MID-10231": [
+        "read",
+        "draft",
+        "pay"
+       ]
+      },
+      "max_amount": {
+       "value": 15000,
+       "currency": "GBP"
+      },
+      "actions": [
+       "read",
+       "draft",
+       "submit",
+       "pay",
+       "transfer"
+      ],
+      "approval": {
+       "actions": [
+        "submit"
+       ]
+      }
+     }
+    },
+    "signature": {
+     "alg": "Ed25519",
+     "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+     "value": "WZl51lN95kQ3dK0pxf9pN+OMqnJwwic5S7VxEwTylfI1MJVpE9VX1r0/XdtFttk5F6CKwIxklPPpzOMOGaQ7AA=="
+    }
+   },
+   "trusted": [
+    "issuer"
+   ],
+   "store": false,
+   "revocation_lists": [],
+   "steps": [
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "MID-10231",
+      "category": "4900",
+      "amount": {
+       "value": 11840,
+       "currency": "GBP"
+      },
+      "action": "pay"
+     },
+     "expect": {
+      "decision": "deny",
+      "failed": [
+       "constraints_enforceable"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "an unknown wire version is denied",
+   "signer": "issuer",
+   "mandate": {
+    "mandate": {
+     "version": "mandatekit/v9",
+     "spec": "AP2-draft-2026Q2",
+     "mandate_id": "m-v9",
+     "subject": {
+      "agent_id": "agent-tidy",
+      "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc="
+     },
+     "issued_at": "2026-10-11T12:00:00Z",
+     "expires_at": "2026-10-19T12:00:00Z",
+     "constraints": {
+      "intent": "pay the energy bill",
+      "categories": [
+       "bank",
+       "4900"
+      ],
+      "counterparties": {
+       "harbourline": [
+        "read",
+        "submit",
+        "transfer"
+       ],
+       "MID-10231": [
+        "read",
+        "draft",
+        "pay"
+       ]
+      },
+      "max_amount": {
+       "value": 15000,
+       "currency": "GBP"
+      },
+      "actions": [
+       "read",
+       "draft",
+       "submit",
+       "pay",
+       "transfer"
+      ],
+      "approval": {
+       "actions": [
+        "submit"
+       ]
+      }
+     }
+    },
+    "signature": {
+     "alg": "Ed25519",
+     "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+     "value": "HtRKH2dt9ROLwB+VmU/WOvgOOHJyCqMXTe1g1HAIXakVGWwMrOnRDmb0kmEOF/UyeZJK9jlbA5lFkpgpfYmJBw=="
+    }
+   },
+   "trusted": [
+    "issuer"
+   ],
+   "store": false,
+   "revocation_lists": [],
+   "steps": [
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "MID-10231",
+      "category": "4900",
+      "amount": {
+       "value": 11840,
+       "currency": "GBP"
+      },
+      "action": "pay"
+     },
+     "expect": {
+      "decision": "deny",
+      "failed": [
+       "version"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "a missing wire version is denied",
+   "signer": "issuer",
+   "mandate": {
+    "mandate": {
+     "spec": "AP2-draft-2026Q2",
+     "mandate_id": "m-noversion",
+     "subject": {
+      "agent_id": "agent-tidy",
+      "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc="
+     },
+     "issued_at": "2026-10-11T12:00:00Z",
+     "expires_at": "2026-10-19T12:00:00Z",
+     "constraints": {
+      "intent": "pay the energy bill",
+      "categories": [
+       "bank",
+       "4900"
+      ],
+      "counterparties": {
+       "harbourline": [
+        "read",
+        "submit",
+        "transfer"
+       ],
+       "MID-10231": [
+        "read",
+        "draft",
+        "pay"
+       ]
+      },
+      "max_amount": {
+       "value": 15000,
+       "currency": "GBP"
+      },
+      "actions": [
+       "read",
+       "draft",
+       "submit",
+       "pay",
+       "transfer"
+      ],
+      "approval": {
+       "actions": [
+        "submit"
+       ]
+      }
+     }
+    },
+    "signature": {
+     "alg": "Ed25519",
+     "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+     "value": "ISOWy0RQTR5OInHx+efmQqNOQ0kf33S+l47ipad+/HrRnH4HnXPXF0LOM8Qfok9Tlge8W+RDV6uZBh9YJ1tGAg=="
+    }
+   },
+   "trusted": [
+    "issuer"
+   ],
+   "store": false,
+   "revocation_lists": [],
+   "steps": [
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "MID-10231",
+      "category": "4900",
+      "amount": {
+       "value": 11840,
+       "currency": "GBP"
+      },
+      "action": "pay"
+     },
+     "expect": {
+      "decision": "deny",
+      "failed": [
+       "version"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "limits declared but no store supplied: deny",
+   "signer": "issuer",
+   "mandate": {
+    "mandate": {
+     "version": "mandatekit/v0.2",
+     "spec": "AP2-draft-2026Q2",
+     "mandate_id": "m-uses",
+     "subject": {
+      "agent_id": "agent-shop"
+     },
+     "issued_at": "2026-10-11T12:00:00Z",
+     "expires_at": "2026-10-19T12:00:00Z",
+     "constraints": {
+      "categories": [
+       "5411"
+      ],
+      "counterparties": {
+       "shop": [
+        "read",
+        "pay"
+       ]
+      },
+      "max_amount": {
+       "value": 15000,
+       "currency": "GBP"
+      },
+      "limits": {
+       "actions": [
+        "pay"
+       ],
+       "max_uses": 1
+      }
+     }
+    },
+    "signature": {
+     "alg": "Ed25519",
+     "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+     "value": "XR3eKDVomnh/OnmJkq70OIeG1Eu9hVxVvHqDb02pSE5L/idgtoc6Yn0pI9ly1JvcnREkUhldYYxWQfiFlW7BBA=="
+    }
+   },
+   "trusted": [
+    "issuer"
+   ],
+   "store": false,
+   "revocation_lists": [],
+   "steps": [
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "shop",
+      "category": "5411",
+      "amount": {
+       "value": 2500,
+       "currency": "GBP"
+      },
+      "action": "pay"
+     },
+     "expect": {
+      "decision": "deny",
+      "failed": [
+       "limits_store"
+      ]
+     }
+    },
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "shop",
+      "category": "5411",
+      "amount": {
+       "value": 0,
+       "currency": "GBP"
+      },
+      "action": "read"
+     },
+     "expect": {
+      "decision": "deny",
+      "failed": [
+       "limits_store"
+      ]
+     },
+     "note": "even for a verb the limit does not count"
+    }
+   ]
+  },
+  {
+   "name": "max_uses: one pay per mandate; reads do not count",
+   "signer": "issuer",
+   "mandate": {
+    "mandate": {
+     "version": "mandatekit/v0.2",
+     "spec": "AP2-draft-2026Q2",
+     "mandate_id": "m-uses",
+     "subject": {
+      "agent_id": "agent-shop"
+     },
+     "issued_at": "2026-10-11T12:00:00Z",
+     "expires_at": "2026-10-19T12:00:00Z",
+     "constraints": {
+      "categories": [
+       "5411"
+      ],
+      "counterparties": {
+       "shop": [
+        "read",
+        "pay"
+       ]
+      },
+      "max_amount": {
+       "value": 15000,
+       "currency": "GBP"
+      },
+      "limits": {
+       "actions": [
+        "pay"
+       ],
+       "max_uses": 1
+      }
+     }
+    },
+    "signature": {
+     "alg": "Ed25519",
+     "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+     "value": "XR3eKDVomnh/OnmJkq70OIeG1Eu9hVxVvHqDb02pSE5L/idgtoc6Yn0pI9ly1JvcnREkUhldYYxWQfiFlW7BBA=="
+    }
+   },
+   "trusted": [
+    "issuer"
+   ],
+   "store": true,
+   "revocation_lists": [],
+   "steps": [
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "shop",
+      "category": "5411",
+      "amount": {
+       "value": 2500,
+       "currency": "GBP"
+      },
+      "action": "pay"
+     },
+     "expect": {
+      "decision": "allow",
+      "failed": []
+     }
+    },
+    {
+     "op": "record",
+     "transaction": {
+      "merchant": "shop",
+      "category": "5411",
+      "amount": {
+       "value": 2500,
+       "currency": "GBP"
+      },
+      "action": "pay"
+     }
+    },
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "shop",
+      "category": "5411",
+      "amount": {
+       "value": 2500,
+       "currency": "GBP"
+      },
+      "action": "pay"
+     },
+     "expect": {
+      "decision": "deny",
+      "failed": [
+       "max_uses"
+      ]
+     },
+     "now": "2026-10-12T12:00:10Z",
+     "note": "the second in-cap payment (entry three's warranty)"
+    },
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "shop",
+      "category": "5411",
+      "amount": {
+       "value": 0,
+       "currency": "GBP"
+      },
+      "action": "read"
+     },
+     "expect": {
+      "decision": "allow",
+      "failed": []
+     },
+     "now": "2026-10-12T12:00:10Z"
+    },
+    {
+     "op": "record",
+     "transaction": {
+      "merchant": "shop",
+      "category": "5411",
+      "amount": {
+       "value": 0,
+       "currency": "GBP"
+      },
+      "action": "read"
+     },
+     "now": "2026-10-12T12:00:10Z"
+    },
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "shop",
+      "category": "5411",
+      "amount": {
+       "value": 2500,
+       "currency": "GBP"
+      },
+      "action": "pay"
+     },
+     "expect": {
+      "decision": "deny",
+      "failed": [
+       "max_uses"
+      ]
+     },
+     "now": "2026-10-13T12:00:00Z"
+    }
+   ]
+  },
+  {
+   "name": "max_uses_per_window: a use counts while it is less than window_seconds old",
+   "signer": "issuer",
+   "mandate": {
+    "mandate": {
+     "version": "mandatekit/v0.2",
+     "spec": "AP2-draft-2026Q2",
+     "mandate_id": "m-win-uses",
+     "subject": {
+      "agent_id": "agent-shop"
+     },
+     "issued_at": "2026-10-11T12:00:00Z",
+     "expires_at": "2026-10-19T12:00:00Z",
+     "constraints": {
+      "categories": [
+       "5411"
+      ],
+      "counterparties": {
+       "shop": [
+        "read",
+        "pay"
+       ]
+      },
+      "max_amount": {
+       "value": 15000,
+       "currency": "GBP"
+      },
+      "limits": {
+       "max_uses_per_window": 2,
+       "window_seconds": 3600
+      }
+     }
+    },
+    "signature": {
+     "alg": "Ed25519",
+     "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+     "value": "1DNkk5kWNhu/uHoQCermSw/04dxmOWJtL/TS3t3NTKLotdFeefZv2xY3Z4tCV/xSMLRGUQ2ylW+dhC6yIZLcDw=="
+    }
+   },
+   "trusted": [
+    "issuer"
+   ],
+   "store": true,
+   "revocation_lists": [],
+   "steps": [
+    {
+     "op": "record",
+     "transaction": {
+      "merchant": "shop",
+      "category": "5411",
+      "amount": {
+       "value": 0,
+       "currency": "GBP"
+      },
+      "action": "read"
+     },
+     "now": "2026-10-12T11:00:00Z"
+    },
+    {
+     "op": "record",
+     "transaction": {
+      "merchant": "shop",
+      "category": "5411",
+      "amount": {
+       "value": 0,
+       "currency": "GBP"
+      },
+      "action": "read"
+     },
+     "now": "2026-10-12T11:10:00Z"
+    },
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "shop",
+      "category": "5411",
+      "amount": {
+       "value": 0,
+       "currency": "GBP"
+      },
+      "action": "read"
+     },
+     "expect": {
+      "decision": "allow",
+      "failed": []
+     },
+     "now": "2026-10-12T12:00:00Z",
+     "note": "the use at exactly 3600s has aged out"
+    },
+    {
+     "op": "record",
+     "transaction": {
+      "merchant": "shop",
+      "category": "5411",
+      "amount": {
+       "value": 0,
+       "currency": "GBP"
+      },
+      "action": "read"
+     },
+     "now": "2026-10-12T11:58:20Z"
+    },
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "shop",
+      "category": "5411",
+      "amount": {
+       "value": 0,
+       "currency": "GBP"
+      },
+      "action": "read"
+     },
+     "expect": {
+      "decision": "deny",
+      "failed": [
+       "max_uses_per_window"
+      ]
+     },
+     "now": "2026-10-12T12:00:00Z"
+    },
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "shop",
+      "category": "5411",
+      "amount": {
+       "value": 0,
+       "currency": "GBP"
+      },
+      "action": "read"
+     },
+     "expect": {
+      "decision": "allow",
+      "failed": []
+     },
+     "now": "2026-10-12T12:11:40Z"
+    }
+   ]
+  },
+  {
+   "name": "max_amount_per_window: cumulative amount in the window, boundary inclusive",
+   "signer": "issuer",
+   "mandate": {
+    "mandate": {
+     "version": "mandatekit/v0.2",
+     "spec": "AP2-draft-2026Q2",
+     "mandate_id": "m-win-amount",
+     "subject": {
+      "agent_id": "agent-shop"
+     },
+     "issued_at": "2026-10-11T12:00:00Z",
+     "expires_at": "2026-10-19T12:00:00Z",
+     "constraints": {
+      "categories": [
+       "5411"
+      ],
+      "counterparties": {
+       "shop": [
+        "read",
+        "pay"
+       ]
+      },
+      "max_amount": {
+       "value": 15000,
+       "currency": "GBP"
+      },
+      "limits": {
+       "window_seconds": 3600,
+       "max_amount_per_window": {
+        "value": 20000,
+        "currency": "GBP"
+       }
+      }
+     }
+    },
+    "signature": {
+     "alg": "Ed25519",
+     "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+     "value": "Tp4v0zUkaq4Q3oMnwmM1Vz8VugvetnMtxBaPq74Rr9otdL86MuajIkXd3Lino7qFbPt/QJGy11xE1K1ozQZHBA=="
+    }
+   },
+   "trusted": [
+    "issuer"
+   ],
+   "store": true,
+   "revocation_lists": [],
+   "steps": [
+    {
+     "op": "record",
+     "transaction": {
+      "merchant": "shop",
+      "category": "5411",
+      "amount": {
+       "value": 15000,
+       "currency": "GBP"
+      },
+      "action": "pay"
+     },
+     "now": "2026-10-12T11:59:00Z"
+    },
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "shop",
+      "category": "5411",
+      "amount": {
+       "value": 5000,
+       "currency": "GBP"
+      },
+      "action": "pay"
+     },
+     "expect": {
+      "decision": "allow",
+      "failed": []
+     },
+     "now": "2026-10-12T12:00:00Z"
+    },
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "shop",
+      "category": "5411",
+      "amount": {
+       "value": 5001,
+       "currency": "GBP"
+      },
+      "action": "pay"
+     },
+     "expect": {
+      "decision": "deny",
+      "failed": [
+       "max_amount_per_window"
+      ]
+     },
+     "now": "2026-10-12T12:00:00Z"
+    },
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "shop",
+      "category": "5411",
+      "amount": {
+       "value": 15000,
+       "currency": "GBP"
+      },
+      "action": "pay"
+     },
+     "expect": {
+      "decision": "allow",
+      "failed": []
+     },
+     "now": "2026-10-12T12:59:00Z",
+     "note": "the recorded pay is 3600s old"
+    },
+    {
+     "op": "verify",
+     "transaction": {
+      "action": "pay",
+      "merchant": "shop",
+      "category": "5411"
+     },
+     "expect": {
+      "decision": "deny",
+      "failed": [
+       "amount",
+       "max_amount_per_window"
+      ]
+     },
+     "now": "2026-10-12T12:00:00Z",
+     "note": "no amount"
+    },
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "shop",
+      "category": "5411",
+      "amount": {
+       "value": 100,
+       "currency": "USD"
+      },
+      "action": "pay"
+     },
+     "expect": {
+      "decision": "deny",
+      "failed": [
+       "amount",
+       "max_amount_per_window"
+      ]
+     },
+     "now": "2026-10-12T12:00:00Z",
+     "note": "currency mismatch"
+    },
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "shop",
+      "category": "5411",
+      "amount": {
+       "value": 0,
+       "currency": "GBP"
+      },
+      "action": "read"
+     },
+     "expect": {
+      "decision": "allow",
+      "failed": []
+     },
+     "now": "2026-10-12T12:00:00Z",
+     "note": "a zero-amount read adds nothing"
+    }
+   ]
+  },
+  {
+   "name": "max_total_amount: cumulative over the mandate's life",
+   "signer": "issuer",
+   "mandate": {
+    "mandate": {
+     "version": "mandatekit/v0.2",
+     "spec": "AP2-draft-2026Q2",
+     "mandate_id": "m-total",
+     "subject": {
+      "agent_id": "agent-shop"
+     },
+     "issued_at": "2026-10-11T12:00:00Z",
+     "expires_at": "2026-10-19T12:00:00Z",
+     "constraints": {
+      "categories": [
+       "5411"
+      ],
+      "counterparties": {
+       "shop": [
+        "read",
+        "pay"
+       ]
+      },
+      "max_amount": {
+       "value": 15000,
+       "currency": "GBP"
+      },
+      "limits": {
+       "max_total_amount": {
+        "value": 20000,
+        "currency": "GBP"
+       }
+      }
+     }
+    },
+    "signature": {
+     "alg": "Ed25519",
+     "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+     "value": "so9XxECOSvUgKePO5WaIRJtS/C2YWQaCfYGGyu7fObRwIF0c8DIjfaZG29Jwcd1mL/jQuGcBqZOeHcIq2d4LAw=="
+    }
+   },
+   "trusted": [
+    "issuer"
+   ],
+   "store": true,
+   "revocation_lists": [],
+   "steps": [
+    {
+     "op": "record",
+     "transaction": {
+      "merchant": "shop",
+      "category": "5411",
+      "amount": {
+       "value": 15000,
+       "currency": "GBP"
+      },
+      "action": "pay"
+     },
+     "now": "2026-10-11T12:00:00Z"
+    },
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "shop",
+      "category": "5411",
+      "amount": {
+       "value": 5000,
+       "currency": "GBP"
+      },
+      "action": "pay"
+     },
+     "expect": {
+      "decision": "allow",
+      "failed": []
+     }
+    },
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "shop",
+      "category": "5411",
+      "amount": {
+       "value": 5001,
+       "currency": "GBP"
+      },
+      "action": "pay"
+     },
+     "expect": {
+      "decision": "deny",
+      "failed": [
+       "max_total_amount"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "malformed limits (a string count) is a deny even with a store",
+   "signer": "issuer",
+   "mandate": {
+    "mandate": {
+     "version": "mandatekit/v0.2",
+     "spec": "AP2-draft-2026Q2",
+     "mandate_id": "m-bad-limits",
+     "subject": {
+      "agent_id": "agent-shop"
+     },
+     "issued_at": "2026-10-11T12:00:00Z",
+     "expires_at": "2026-10-19T12:00:00Z",
+     "constraints": {
+      "counterparties": {
+       "shop": [
+        "read",
+        "pay"
+       ]
+      },
+      "max_amount": {
+       "value": 15000,
+       "currency": "GBP"
+      },
+      "limits": {
+       "max_uses": "3"
+      }
+     }
+    },
+    "signature": {
+     "alg": "Ed25519",
+     "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+     "value": "2GBDv18R133NaeysaHS3mBoSdjN1iOxXtoJC4EBYkrH7+nus5ZcovyqaXbi28IVAaJSXmzmCCa4bhef9XobLDw=="
+    }
+   },
+   "trusted": [
+    "issuer"
+   ],
+   "store": true,
+   "revocation_lists": [],
+   "steps": [
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "shop",
+      "category": "5411",
+      "amount": {
+       "value": 2500,
+       "currency": "GBP"
+      },
+      "action": "pay"
+     },
+     "expect": {
+      "decision": "deny",
+      "failed": [
+       "limits"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "a per-window limit without window_seconds is malformed",
+   "signer": "issuer",
+   "mandate": {
+    "mandate": {
+     "version": "mandatekit/v0.2",
+     "spec": "AP2-draft-2026Q2",
+     "mandate_id": "m-no-window",
+     "subject": {
+      "agent_id": "agent-shop"
+     },
+     "issued_at": "2026-10-11T12:00:00Z",
+     "expires_at": "2026-10-19T12:00:00Z",
+     "constraints": {
+      "counterparties": {
+       "shop": [
+        "read",
+        "pay"
+       ]
+      },
+      "max_amount": {
+       "value": 15000,
+       "currency": "GBP"
+      },
+      "limits": {
+       "max_uses_per_window": 1
+      }
+     }
+    },
+    "signature": {
+     "alg": "Ed25519",
+     "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+     "value": "o24u/FmMYoLHHivY3mrhKjHSCMNKx6W6U3sVQtc04t4clzjYKw31n/DuZd8HRly2iJec499L0szHhHxeOXZ3DA=="
+    }
+   },
+   "trusted": [
+    "issuer"
+   ],
+   "store": true,
+   "revocation_lists": [],
+   "steps": [
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "shop",
+      "category": "5411",
+      "amount": {
+       "value": 2500,
+       "currency": "GBP"
+      },
+      "action": "pay"
+     },
+     "expect": {
+      "decision": "deny",
+      "failed": [
+       "limits"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "an unknown key inside limits is malformed (fail closed)",
+   "signer": "issuer",
+   "mandate": {
+    "mandate": {
+     "version": "mandatekit/v0.2",
+     "spec": "AP2-draft-2026Q2",
+     "mandate_id": "m-unknown-limit",
+     "subject": {
+      "agent_id": "agent-shop"
+     },
+     "issued_at": "2026-10-11T12:00:00Z",
+     "expires_at": "2026-10-19T12:00:00Z",
+     "constraints": {
+      "counterparties": {
+       "shop": [
+        "read",
+        "pay"
+       ]
+      },
+      "max_amount": {
+       "value": 15000,
+       "currency": "GBP"
+      },
+      "limits": {
+       "max_uses": 1,
+       "per_day": 3
+      }
+     }
+    },
+    "signature": {
+     "alg": "Ed25519",
+     "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+     "value": "Etog8a6GiRWU00bjR7ZiQ8ZOOuZLbS8S+oyP5W9YdcZHoNtKBZt12n9mhbizDRo2lBQFhbvXgUJv9Oi6FEkCDg=="
+    }
+   },
+   "trusted": [
+    "issuer"
+   ],
+   "store": true,
+   "revocation_lists": [],
+   "steps": [
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "shop",
+      "category": "5411",
+      "amount": {
+       "value": 2500,
+       "currency": "GBP"
+      },
+      "action": "pay"
+     },
+     "expect": {
+      "decision": "deny",
+      "failed": [
+       "limits"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "a malformed record in the store is a deny",
+   "signer": "issuer",
+   "mandate": {
+    "mandate": {
+     "version": "mandatekit/v0.2",
+     "spec": "AP2-draft-2026Q2",
+     "mandate_id": "m-uses",
+     "subject": {
+      "agent_id": "agent-shop"
+     },
+     "issued_at": "2026-10-11T12:00:00Z",
+     "expires_at": "2026-10-19T12:00:00Z",
+     "constraints": {
+      "categories": [
+       "5411"
+      ],
+      "counterparties": {
+       "shop": [
+        "read",
+        "pay"
+       ]
+      },
+      "max_amount": {
+       "value": 15000,
+       "currency": "GBP"
+      },
+      "limits": {
+       "actions": [
+        "pay"
+       ],
+       "max_uses": 1
+      }
+     }
+    },
+    "signature": {
+     "alg": "Ed25519",
+     "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+     "value": "XR3eKDVomnh/OnmJkq70OIeG1Eu9hVxVvHqDb02pSE5L/idgtoc6Yn0pI9ly1JvcnREkUhldYYxWQfiFlW7BBA=="
+    }
+   },
+   "trusted": [
+    "issuer"
+   ],
+   "store": true,
+   "revocation_lists": [],
+   "steps": [
+    {
+     "op": "record_raw",
+     "mandate_id": "m-uses",
+     "use": {
+      "at": "yesterday",
+      "action": "pay",
+      "amount": null
+     }
+    },
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "shop",
+      "category": "5411",
+      "amount": {
+       "value": 2500,
+       "currency": "GBP"
+      },
+      "action": "pay"
+     },
+     "expect": {
+      "decision": "deny",
+      "failed": [
+       "limits_store"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "revocation: a declared list that is not supplied is a deny",
+   "signer": "issuer",
+   "mandate": {
+    "mandate": {
+     "version": "mandatekit/v0.2",
+     "spec": "AP2-draft-2026Q2",
+     "mandate_id": "m-revocable",
+     "subject": {
+      "agent_id": "agent-tidy",
+      "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc="
+     },
+     "issued_at": "2026-10-11T12:00:00Z",
+     "expires_at": "2026-10-19T12:00:00Z",
+     "constraints": {
+      "intent": "pay the energy bill",
+      "categories": [
+       "bank",
+       "4900"
+      ],
+      "counterparties": {
+       "harbourline": [
+        "read",
+        "submit",
+        "transfer"
+       ],
+       "MID-10231": [
+        "read",
+        "draft",
+        "pay"
+       ]
+      },
+      "max_amount": {
+       "value": 15000,
+       "currency": "GBP"
+      },
+      "actions": [
+       "read",
+       "draft",
+       "submit",
+       "pay",
+       "transfer"
+      ],
+      "approval": {
+       "actions": [
+        "submit"
+       ]
+      },
+      "revocation": {
+       "list_id": "rl-alex"
+      }
+     }
+    },
+    "signature": {
+     "alg": "Ed25519",
+     "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+     "value": "qBx02iUqjBvWwxWKc5tb0poUdnfyccZHN7+xyG5UiKh9UPO7Ut/xMpRew/+KnEdr0RTeDAMiz1z9dxdMRb7jAA=="
+    }
+   },
+   "trusted": [
+    "issuer"
+   ],
+   "store": false,
+   "revocation_lists": [],
+   "steps": [
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "harbourline",
+      "category": "bank",
+      "amount": {
+       "value": 0,
+       "currency": "GBP"
+      },
+      "action": "read"
+     },
+     "expect": {
+      "decision": "deny",
+      "failed": [
+       "revocation_list"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "revocation: a clean issuer-signed list allows",
+   "signer": "issuer",
+   "mandate": {
+    "mandate": {
+     "version": "mandatekit/v0.2",
+     "spec": "AP2-draft-2026Q2",
+     "mandate_id": "m-revocable",
+     "subject": {
+      "agent_id": "agent-tidy",
+      "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc="
+     },
+     "issued_at": "2026-10-11T12:00:00Z",
+     "expires_at": "2026-10-19T12:00:00Z",
+     "constraints": {
+      "intent": "pay the energy bill",
+      "categories": [
+       "bank",
+       "4900"
+      ],
+      "counterparties": {
+       "harbourline": [
+        "read",
+        "submit",
+        "transfer"
+       ],
+       "MID-10231": [
+        "read",
+        "draft",
+        "pay"
+       ]
+      },
+      "max_amount": {
+       "value": 15000,
+       "currency": "GBP"
+      },
+      "actions": [
+       "read",
+       "draft",
+       "submit",
+       "pay",
+       "transfer"
+      ],
+      "approval": {
+       "actions": [
+        "submit"
+       ]
+      },
+      "revocation": {
+       "list_id": "rl-alex"
+      }
+     }
+    },
+    "signature": {
+     "alg": "Ed25519",
+     "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+     "value": "qBx02iUqjBvWwxWKc5tb0poUdnfyccZHN7+xyG5UiKh9UPO7Ut/xMpRew/+KnEdr0RTeDAMiz1z9dxdMRb7jAA=="
+    }
+   },
+   "trusted": [
+    "issuer"
+   ],
+   "store": false,
+   "revocation_lists": [
+    {
+     "signer": "issuer",
+     "envelope": {
+      "list": {
+       "version": "mandatekit/revocation-list/v0.2",
+       "list_id": "rl-alex",
+       "issued_at": "2026-10-12T11:55:00Z",
+       "revoked": [
+        "someone-else"
+       ]
+      },
+      "signature": {
+       "alg": "Ed25519",
+       "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+       "value": "qd8gfYIOrOAzKDttt4D/LFdbP8X7ASpHA9zy8hGblS9OB8w8wg+O0MbgK8MruQv/+1kL+b+IQJKbxpWFI7nWCw=="
+      }
+     }
+    }
+   ],
+   "steps": [
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "harbourline",
+      "category": "bank",
+      "amount": {
+       "value": 0,
+       "currency": "GBP"
+      },
+      "action": "read"
+     },
+     "expect": {
+      "decision": "allow",
+      "failed": []
+     }
+    }
+   ]
+  },
+  {
+   "name": "revocation: the mandate's id on the list is a deny",
+   "signer": "issuer",
+   "mandate": {
+    "mandate": {
+     "version": "mandatekit/v0.2",
+     "spec": "AP2-draft-2026Q2",
+     "mandate_id": "m-revocable",
+     "subject": {
+      "agent_id": "agent-tidy",
+      "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc="
+     },
+     "issued_at": "2026-10-11T12:00:00Z",
+     "expires_at": "2026-10-19T12:00:00Z",
+     "constraints": {
+      "intent": "pay the energy bill",
+      "categories": [
+       "bank",
+       "4900"
+      ],
+      "counterparties": {
+       "harbourline": [
+        "read",
+        "submit",
+        "transfer"
+       ],
+       "MID-10231": [
+        "read",
+        "draft",
+        "pay"
+       ]
+      },
+      "max_amount": {
+       "value": 15000,
+       "currency": "GBP"
+      },
+      "actions": [
+       "read",
+       "draft",
+       "submit",
+       "pay",
+       "transfer"
+      ],
+      "approval": {
+       "actions": [
+        "submit"
+       ]
+      },
+      "revocation": {
+       "list_id": "rl-alex"
+      }
+     }
+    },
+    "signature": {
+     "alg": "Ed25519",
+     "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+     "value": "qBx02iUqjBvWwxWKc5tb0poUdnfyccZHN7+xyG5UiKh9UPO7Ut/xMpRew/+KnEdr0RTeDAMiz1z9dxdMRb7jAA=="
+    }
+   },
+   "trusted": [
+    "issuer"
+   ],
+   "store": false,
+   "revocation_lists": [
+    {
+     "signer": "issuer",
+     "envelope": {
+      "list": {
+       "version": "mandatekit/revocation-list/v0.2",
+       "list_id": "rl-alex",
+       "issued_at": "2026-10-12T11:55:00Z",
+       "revoked": [
+        "m-revocable",
+        "someone-else"
+       ]
+      },
+      "signature": {
+       "alg": "Ed25519",
+       "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+       "value": "FbWuCHUcoSNTJnmwGXiiJR0il/pU6qisyllHsk1lc3pY7mzgM2Ct3ImRNbbcQ21NElkNJNNj1xNRUbJErRIKDA=="
+      }
+     }
+    }
+   ],
+   "steps": [
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "harbourline",
+      "category": "bank",
+      "amount": {
+       "value": 0,
+       "currency": "GBP"
+      },
+      "action": "read"
+     },
+     "expect": {
+      "decision": "deny",
+      "failed": [
+       "revoked"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "revocation: a list signed by a stranger is unavailable",
+   "signer": "issuer",
+   "mandate": {
+    "mandate": {
+     "version": "mandatekit/v0.2",
+     "spec": "AP2-draft-2026Q2",
+     "mandate_id": "m-revocable",
+     "subject": {
+      "agent_id": "agent-tidy",
+      "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc="
+     },
+     "issued_at": "2026-10-11T12:00:00Z",
+     "expires_at": "2026-10-19T12:00:00Z",
+     "constraints": {
+      "intent": "pay the energy bill",
+      "categories": [
+       "bank",
+       "4900"
+      ],
+      "counterparties": {
+       "harbourline": [
+        "read",
+        "submit",
+        "transfer"
+       ],
+       "MID-10231": [
+        "read",
+        "draft",
+        "pay"
+       ]
+      },
+      "max_amount": {
+       "value": 15000,
+       "currency": "GBP"
+      },
+      "actions": [
+       "read",
+       "draft",
+       "submit",
+       "pay",
+       "transfer"
+      ],
+      "approval": {
+       "actions": [
+        "submit"
+       ]
+      },
+      "revocation": {
+       "list_id": "rl-alex"
+      }
+     }
+    },
+    "signature": {
+     "alg": "Ed25519",
+     "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+     "value": "qBx02iUqjBvWwxWKc5tb0poUdnfyccZHN7+xyG5UiKh9UPO7Ut/xMpRew/+KnEdr0RTeDAMiz1z9dxdMRb7jAA=="
+    }
+   },
+   "trusted": [
+    "issuer"
+   ],
+   "store": false,
+   "revocation_lists": [
+    {
+     "signer": "stranger",
+     "envelope": {
+      "list": {
+       "version": "mandatekit/revocation-list/v0.2",
+       "list_id": "rl-alex",
+       "issued_at": "2026-10-12T11:55:00Z",
+       "revoked": []
+      },
+      "signature": {
+       "alg": "Ed25519",
+       "public_key": "a/LUxZOREoNb/fwttS8rnbc1+rVPYnP+QUm2UFvXaUY=",
+       "value": "eYeHfILOHRolp0hMxFHd8Hb97cmHWwtDUwzgljRxci2Z1qn+uLsiw4gbSLvi1XjdALep9Z7j9J+anJPM7gvoAQ=="
+      }
+     }
+    }
+   ],
+   "steps": [
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "harbourline",
+      "category": "bank",
+      "amount": {
+       "value": 0,
+       "currency": "GBP"
+      },
+      "action": "read"
+     },
+     "expect": {
+      "decision": "deny",
+      "failed": [
+       "revocation_list"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "revocation: a list edited after signing is unavailable",
+   "signer": "issuer",
+   "mandate": {
+    "mandate": {
+     "version": "mandatekit/v0.2",
+     "spec": "AP2-draft-2026Q2",
+     "mandate_id": "m-revocable",
+     "subject": {
+      "agent_id": "agent-tidy",
+      "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc="
+     },
+     "issued_at": "2026-10-11T12:00:00Z",
+     "expires_at": "2026-10-19T12:00:00Z",
+     "constraints": {
+      "intent": "pay the energy bill",
+      "categories": [
+       "bank",
+       "4900"
+      ],
+      "counterparties": {
+       "harbourline": [
+        "read",
+        "submit",
+        "transfer"
+       ],
+       "MID-10231": [
+        "read",
+        "draft",
+        "pay"
+       ]
+      },
+      "max_amount": {
+       "value": 15000,
+       "currency": "GBP"
+      },
+      "actions": [
+       "read",
+       "draft",
+       "submit",
+       "pay",
+       "transfer"
+      ],
+      "approval": {
+       "actions": [
+        "submit"
+       ]
+      },
+      "revocation": {
+       "list_id": "rl-alex"
+      }
+     }
+    },
+    "signature": {
+     "alg": "Ed25519",
+     "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+     "value": "qBx02iUqjBvWwxWKc5tb0poUdnfyccZHN7+xyG5UiKh9UPO7Ut/xMpRew/+KnEdr0RTeDAMiz1z9dxdMRb7jAA=="
+    }
+   },
+   "trusted": [
+    "issuer"
+   ],
+   "store": false,
+   "revocation_lists": [
+    {
+     "signer": null,
+     "envelope": {
+      "list": {
+       "version": "mandatekit/revocation-list/v0.2",
+       "list_id": "rl-alex",
+       "issued_at": "2026-10-12T11:55:00Z",
+       "revoked": [
+        "someone-else"
+       ]
+      },
+      "signature": {
+       "alg": "Ed25519",
+       "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+       "value": "FbWuCHUcoSNTJnmwGXiiJR0il/pU6qisyllHsk1lc3pY7mzgM2Ct3ImRNbbcQ21NElkNJNNj1xNRUbJErRIKDA=="
+      }
+     }
+    }
+   ],
+   "steps": [
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "harbourline",
+      "category": "bank",
+      "amount": {
+       "value": 0,
+       "currency": "GBP"
+      },
+      "action": "read"
+     },
+     "expect": {
+      "decision": "deny",
+      "failed": [
+       "revocation_list"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "revocation: a list with another id does not satisfy the declaration",
+   "signer": "issuer",
+   "mandate": {
+    "mandate": {
+     "version": "mandatekit/v0.2",
+     "spec": "AP2-draft-2026Q2",
+     "mandate_id": "m-revocable",
+     "subject": {
+      "agent_id": "agent-tidy",
+      "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc="
+     },
+     "issued_at": "2026-10-11T12:00:00Z",
+     "expires_at": "2026-10-19T12:00:00Z",
+     "constraints": {
+      "intent": "pay the energy bill",
+      "categories": [
+       "bank",
+       "4900"
+      ],
+      "counterparties": {
+       "harbourline": [
+        "read",
+        "submit",
+        "transfer"
+       ],
+       "MID-10231": [
+        "read",
+        "draft",
+        "pay"
+       ]
+      },
+      "max_amount": {
+       "value": 15000,
+       "currency": "GBP"
+      },
+      "actions": [
+       "read",
+       "draft",
+       "submit",
+       "pay",
+       "transfer"
+      ],
+      "approval": {
+       "actions": [
+        "submit"
+       ]
+      },
+      "revocation": {
+       "list_id": "rl-alex"
+      }
+     }
+    },
+    "signature": {
+     "alg": "Ed25519",
+     "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+     "value": "qBx02iUqjBvWwxWKc5tb0poUdnfyccZHN7+xyG5UiKh9UPO7Ut/xMpRew/+KnEdr0RTeDAMiz1z9dxdMRb7jAA=="
+    }
+   },
+   "trusted": [
+    "issuer"
+   ],
+   "store": false,
+   "revocation_lists": [
+    {
+     "signer": "issuer",
+     "envelope": {
+      "list": {
+       "version": "mandatekit/revocation-list/v0.2",
+       "list_id": "rl-other",
+       "issued_at": "2026-10-12T11:55:00Z",
+       "revoked": []
+      },
+      "signature": {
+       "alg": "Ed25519",
+       "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+       "value": "H8w9pypQfelIWc43qlUHvXfjwfS+Edf+p3Yq+uVqpiq8ffM3dz75Qtc183jKdKuLiAnithTH3Wd0406M8bOnBw=="
+      }
+     }
+    }
+   ],
+   "steps": [
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "harbourline",
+      "category": "bank",
+      "amount": {
+       "value": 0,
+       "currency": "GBP"
+      },
+      "action": "read"
+     },
+     "expect": {
+      "decision": "deny",
+      "failed": [
+       "revocation_list"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "revocation: a malformed list body is unavailable",
+   "signer": "issuer",
+   "mandate": {
+    "mandate": {
+     "version": "mandatekit/v0.2",
+     "spec": "AP2-draft-2026Q2",
+     "mandate_id": "m-revocable",
+     "subject": {
+      "agent_id": "agent-tidy",
+      "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc="
+     },
+     "issued_at": "2026-10-11T12:00:00Z",
+     "expires_at": "2026-10-19T12:00:00Z",
+     "constraints": {
+      "intent": "pay the energy bill",
+      "categories": [
+       "bank",
+       "4900"
+      ],
+      "counterparties": {
+       "harbourline": [
+        "read",
+        "submit",
+        "transfer"
+       ],
+       "MID-10231": [
+        "read",
+        "draft",
+        "pay"
+       ]
+      },
+      "max_amount": {
+       "value": 15000,
+       "currency": "GBP"
+      },
+      "actions": [
+       "read",
+       "draft",
+       "submit",
+       "pay",
+       "transfer"
+      ],
+      "approval": {
+       "actions": [
+        "submit"
+       ]
+      },
+      "revocation": {
+       "list_id": "rl-alex"
+      }
+     }
+    },
+    "signature": {
+     "alg": "Ed25519",
+     "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+     "value": "qBx02iUqjBvWwxWKc5tb0poUdnfyccZHN7+xyG5UiKh9UPO7Ut/xMpRew/+KnEdr0RTeDAMiz1z9dxdMRb7jAA=="
+    }
+   },
+   "trusted": [
+    "issuer"
+   ],
+   "store": false,
+   "revocation_lists": [
+    {
+     "signer": null,
+     "envelope": {
+      "list": {
+       "version": "mandatekit/revocation-list/v0.2",
+       "list_id": "rl-alex",
+       "issued_at": "2026-10-12T11:55:00Z",
+       "revoked": "m-revocable"
+      },
+      "signature": {
+       "alg": "Ed25519",
+       "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+       "value": "qd8gfYIOrOAzKDttt4D/LFdbP8X7ASpHA9zy8hGblS9OB8w8wg+O0MbgK8MruQv/+1kL+b+IQJKbxpWFI7nWCw=="
+      }
+     }
+    }
+   ],
+   "steps": [
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "harbourline",
+      "category": "bank",
+      "amount": {
+       "value": 0,
+       "currency": "GBP"
+      },
+      "action": "read"
+     },
+     "expect": {
+      "decision": "deny",
+      "failed": [
+       "revocation_list"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "revocation: any valid copy that lists the mandate wins",
+   "signer": "issuer",
+   "mandate": {
+    "mandate": {
+     "version": "mandatekit/v0.2",
+     "spec": "AP2-draft-2026Q2",
+     "mandate_id": "m-revocable",
+     "subject": {
+      "agent_id": "agent-tidy",
+      "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc="
+     },
+     "issued_at": "2026-10-11T12:00:00Z",
+     "expires_at": "2026-10-19T12:00:00Z",
+     "constraints": {
+      "intent": "pay the energy bill",
+      "categories": [
+       "bank",
+       "4900"
+      ],
+      "counterparties": {
+       "harbourline": [
+        "read",
+        "submit",
+        "transfer"
+       ],
+       "MID-10231": [
+        "read",
+        "draft",
+        "pay"
+       ]
+      },
+      "max_amount": {
+       "value": 15000,
+       "currency": "GBP"
+      },
+      "actions": [
+       "read",
+       "draft",
+       "submit",
+       "pay",
+       "transfer"
+      ],
+      "approval": {
+       "actions": [
+        "submit"
+       ]
+      },
+      "revocation": {
+       "list_id": "rl-alex"
+      }
+     }
+    },
+    "signature": {
+     "alg": "Ed25519",
+     "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+     "value": "qBx02iUqjBvWwxWKc5tb0poUdnfyccZHN7+xyG5UiKh9UPO7Ut/xMpRew/+KnEdr0RTeDAMiz1z9dxdMRb7jAA=="
+    }
+   },
+   "trusted": [
+    "issuer"
+   ],
+   "store": false,
+   "revocation_lists": [
+    {
+     "signer": "issuer",
+     "envelope": {
+      "list": {
+       "version": "mandatekit/revocation-list/v0.2",
+       "list_id": "rl-alex",
+       "issued_at": "2026-10-12T11:55:00Z",
+       "revoked": [
+        "someone-else"
+       ]
+      },
+      "signature": {
+       "alg": "Ed25519",
+       "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+       "value": "qd8gfYIOrOAzKDttt4D/LFdbP8X7ASpHA9zy8hGblS9OB8w8wg+O0MbgK8MruQv/+1kL+b+IQJKbxpWFI7nWCw=="
+      }
+     }
+    },
+    {
+     "signer": "issuer",
+     "envelope": {
+      "list": {
+       "version": "mandatekit/revocation-list/v0.2",
+       "list_id": "rl-alex",
+       "issued_at": "2026-10-12T11:55:00Z",
+       "revoked": [
+        "m-revocable",
+        "someone-else"
+       ]
+      },
+      "signature": {
+       "alg": "Ed25519",
+       "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+       "value": "FbWuCHUcoSNTJnmwGXiiJR0il/pU6qisyllHsk1lc3pY7mzgM2Ct3ImRNbbcQ21NElkNJNNj1xNRUbJErRIKDA=="
+      }
+     }
+    }
+   ],
+   "steps": [
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "harbourline",
+      "category": "bank",
+      "amount": {
+       "value": 0,
+       "currency": "GBP"
+      },
+      "action": "read"
+     },
+     "expect": {
+      "decision": "deny",
+      "failed": [
+       "revoked"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "revocation: a pinned trusted key other than the issuer may also revoke",
+   "signer": "issuer",
+   "mandate": {
+    "mandate": {
+     "version": "mandatekit/v0.2",
+     "spec": "AP2-draft-2026Q2",
+     "mandate_id": "m-revocable",
+     "subject": {
+      "agent_id": "agent-tidy",
+      "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc="
+     },
+     "issued_at": "2026-10-11T12:00:00Z",
+     "expires_at": "2026-10-19T12:00:00Z",
+     "constraints": {
+      "intent": "pay the energy bill",
+      "categories": [
+       "bank",
+       "4900"
+      ],
+      "counterparties": {
+       "harbourline": [
+        "read",
+        "submit",
+        "transfer"
+       ],
+       "MID-10231": [
+        "read",
+        "draft",
+        "pay"
+       ]
+      },
+      "max_amount": {
+       "value": 15000,
+       "currency": "GBP"
+      },
+      "actions": [
+       "read",
+       "draft",
+       "submit",
+       "pay",
+       "transfer"
+      ],
+      "approval": {
+       "actions": [
+        "submit"
+       ]
+      },
+      "revocation": {
+       "list_id": "rl-alex"
+      }
+     }
+    },
+    "signature": {
+     "alg": "Ed25519",
+     "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+     "value": "qBx02iUqjBvWwxWKc5tb0poUdnfyccZHN7+xyG5UiKh9UPO7Ut/xMpRew/+KnEdr0RTeDAMiz1z9dxdMRb7jAA=="
+    }
+   },
+   "trusted": [
+    "issuer",
+    "delegate"
+   ],
+   "store": false,
+   "revocation_lists": [
+    {
+     "signer": "delegate",
+     "envelope": {
+      "list": {
+       "version": "mandatekit/revocation-list/v0.2",
+       "list_id": "rl-alex",
+       "issued_at": "2026-10-12T11:55:00Z",
+       "revoked": [
+        "m-revocable"
+       ]
+      },
+      "signature": {
+       "alg": "Ed25519",
+       "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc=",
+       "value": "DIQJCzcKXOhjf13UPa/mZ0NS7vycobKepBfBVhBFy453hoIl4bBcjIezXxUR6verL/SWN9gDU/+zUWkbFV80Dg=="
+      }
+     }
+    }
+   ],
+   "steps": [
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "harbourline",
+      "category": "bank",
+      "amount": {
+       "value": 0,
+       "currency": "GBP"
+      },
+      "action": "read"
+     },
+     "expect": {
+      "decision": "deny",
+      "failed": [
+       "revoked"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "revocation: the delegate's list is not accepted when the delegate is not trusted",
+   "signer": "issuer",
+   "mandate": {
+    "mandate": {
+     "version": "mandatekit/v0.2",
+     "spec": "AP2-draft-2026Q2",
+     "mandate_id": "m-revocable",
+     "subject": {
+      "agent_id": "agent-tidy",
+      "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc="
+     },
+     "issued_at": "2026-10-11T12:00:00Z",
+     "expires_at": "2026-10-19T12:00:00Z",
+     "constraints": {
+      "intent": "pay the energy bill",
+      "categories": [
+       "bank",
+       "4900"
+      ],
+      "counterparties": {
+       "harbourline": [
+        "read",
+        "submit",
+        "transfer"
+       ],
+       "MID-10231": [
+        "read",
+        "draft",
+        "pay"
+       ]
+      },
+      "max_amount": {
+       "value": 15000,
+       "currency": "GBP"
+      },
+      "actions": [
+       "read",
+       "draft",
+       "submit",
+       "pay",
+       "transfer"
+      ],
+      "approval": {
+       "actions": [
+        "submit"
+       ]
+      },
+      "revocation": {
+       "list_id": "rl-alex"
+      }
+     }
+    },
+    "signature": {
+     "alg": "Ed25519",
+     "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+     "value": "qBx02iUqjBvWwxWKc5tb0poUdnfyccZHN7+xyG5UiKh9UPO7Ut/xMpRew/+KnEdr0RTeDAMiz1z9dxdMRb7jAA=="
+    }
+   },
+   "trusted": [
+    "issuer"
+   ],
+   "store": false,
+   "revocation_lists": [
+    {
+     "signer": "delegate",
+     "envelope": {
+      "list": {
+       "version": "mandatekit/revocation-list/v0.2",
+       "list_id": "rl-alex",
+       "issued_at": "2026-10-12T11:55:00Z",
+       "revoked": [
+        "m-revocable"
+       ]
+      },
+      "signature": {
+       "alg": "Ed25519",
+       "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc=",
+       "value": "DIQJCzcKXOhjf13UPa/mZ0NS7vycobKepBfBVhBFy453hoIl4bBcjIezXxUR6verL/SWN9gDU/+zUWkbFV80Dg=="
+      }
+     }
+    }
+   ],
+   "steps": [
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "harbourline",
+      "category": "bank",
+      "amount": {
+       "value": 0,
+       "currency": "GBP"
+      },
+      "action": "read"
+     },
+     "expect": {
+      "decision": "deny",
+      "failed": [
+       "revocation_list"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "revocation with max_age_seconds: a stale list is unavailable, a fresh one allows",
+   "signer": "issuer",
+   "mandate": {
+    "mandate": {
+     "version": "mandatekit/v0.2",
+     "spec": "AP2-draft-2026Q2",
+     "mandate_id": "m-fresh",
+     "subject": {
+      "agent_id": "agent-tidy",
+      "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc="
+     },
+     "issued_at": "2026-10-11T12:00:00Z",
+     "expires_at": "2026-10-19T12:00:00Z",
+     "constraints": {
+      "intent": "pay the energy bill",
+      "categories": [
+       "bank",
+       "4900"
+      ],
+      "counterparties": {
+       "harbourline": [
+        "read",
+        "submit",
+        "transfer"
+       ],
+       "MID-10231": [
+        "read",
+        "draft",
+        "pay"
+       ]
+      },
+      "max_amount": {
+       "value": 15000,
+       "currency": "GBP"
+      },
+      "actions": [
+       "read",
+       "draft",
+       "submit",
+       "pay",
+       "transfer"
+      ],
+      "approval": {
+       "actions": [
+        "submit"
+       ]
+      },
+      "revocation": {
+       "list_id": "rl-alex",
+       "max_age_seconds": 3600
+      }
+     }
+    },
+    "signature": {
+     "alg": "Ed25519",
+     "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+     "value": "CCuc0BD6YNq0eprUA995RjWy4nwx4pGLPi6bD/BRCohfJpotLrvqFCoKRyl+qfRf+iAJLMWC+XVLdYkjUaMaBw=="
+    }
+   },
+   "trusted": [
+    "issuer"
+   ],
+   "store": false,
+   "revocation_lists": [
+    {
+     "signer": "issuer",
+     "envelope": {
+      "list": {
+       "version": "mandatekit/revocation-list/v0.2",
+       "list_id": "rl-alex",
+       "issued_at": "2026-10-12T11:55:00Z",
+       "revoked": [
+        "someone-else"
+       ]
+      },
+      "signature": {
+       "alg": "Ed25519",
+       "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+       "value": "qd8gfYIOrOAzKDttt4D/LFdbP8X7ASpHA9zy8hGblS9OB8w8wg+O0MbgK8MruQv/+1kL+b+IQJKbxpWFI7nWCw=="
+      }
+     }
+    }
+   ],
+   "steps": [
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "harbourline",
+      "category": "bank",
+      "amount": {
+       "value": 0,
+       "currency": "GBP"
+      },
+      "action": "read"
+     },
+     "expect": {
+      "decision": "allow",
+      "failed": []
+     }
+    }
+   ]
+  },
+  {
+   "name": "revocation with max_age_seconds: stale",
+   "signer": "issuer",
+   "mandate": {
+    "mandate": {
+     "version": "mandatekit/v0.2",
+     "spec": "AP2-draft-2026Q2",
+     "mandate_id": "m-fresh",
+     "subject": {
+      "agent_id": "agent-tidy",
+      "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc="
+     },
+     "issued_at": "2026-10-11T12:00:00Z",
+     "expires_at": "2026-10-19T12:00:00Z",
+     "constraints": {
+      "intent": "pay the energy bill",
+      "categories": [
+       "bank",
+       "4900"
+      ],
+      "counterparties": {
+       "harbourline": [
+        "read",
+        "submit",
+        "transfer"
+       ],
+       "MID-10231": [
+        "read",
+        "draft",
+        "pay"
+       ]
+      },
+      "max_amount": {
+       "value": 15000,
+       "currency": "GBP"
+      },
+      "actions": [
+       "read",
+       "draft",
+       "submit",
+       "pay",
+       "transfer"
+      ],
+      "approval": {
+       "actions": [
+        "submit"
+       ]
+      },
+      "revocation": {
+       "list_id": "rl-alex",
+       "max_age_seconds": 3600
+      }
+     }
+    },
+    "signature": {
+     "alg": "Ed25519",
+     "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+     "value": "CCuc0BD6YNq0eprUA995RjWy4nwx4pGLPi6bD/BRCohfJpotLrvqFCoKRyl+qfRf+iAJLMWC+XVLdYkjUaMaBw=="
+    }
+   },
+   "trusted": [
+    "issuer"
+   ],
+   "store": false,
+   "revocation_lists": [
+    {
+     "signer": "issuer",
+     "envelope": {
+      "list": {
+       "version": "mandatekit/revocation-list/v0.2",
+       "list_id": "rl-alex",
+       "issued_at": "2026-10-12T10:00:00Z",
+       "revoked": []
+      },
+      "signature": {
+       "alg": "Ed25519",
+       "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+       "value": "S9yxx2/PAl///A84O6Vk9nwnku5eNDCxwOhBY2GsIqkeBpax2yUdHQLlDWFc2oMIJIEiJWrIyWtGaCsp/DIOCg=="
+      }
+     }
+    }
+   ],
+   "steps": [
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "harbourline",
+      "category": "bank",
+      "amount": {
+       "value": 0,
+       "currency": "GBP"
+      },
+      "action": "read"
+     },
+     "expect": {
+      "decision": "deny",
+      "failed": [
+       "revocation_list"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "a malformed revocation declaration is a deny",
+   "signer": "issuer",
+   "mandate": {
+    "mandate": {
+     "version": "mandatekit/v0.2",
+     "spec": "AP2-draft-2026Q2",
+     "mandate_id": "m-bad-rev",
+     "subject": {
+      "agent_id": "agent-tidy",
+      "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc="
+     },
+     "issued_at": "2026-10-11T12:00:00Z",
+     "expires_at": "2026-10-19T12:00:00Z",
+     "constraints": {
+      "intent": "pay the energy bill",
+      "categories": [
+       "bank",
+       "4900"
+      ],
+      "counterparties": {
+       "harbourline": [
+        "read",
+        "submit",
+        "transfer"
+       ],
+       "MID-10231": [
+        "read",
+        "draft",
+        "pay"
+       ]
+      },
+      "max_amount": {
+       "value": 15000,
+       "currency": "GBP"
+      },
+      "actions": [
+       "read",
+       "draft",
+       "submit",
+       "pay",
+       "transfer"
+      ],
+      "approval": {
+       "actions": [
+        "submit"
+       ]
+      },
+      "revocation": {
+       "list_id": ""
+      }
+     }
+    },
+    "signature": {
+     "alg": "Ed25519",
+     "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+     "value": "j0DewBf8EXlyoztoxYh9+Og27cMjtWJsyFUxEVHoGKYsohOfaIcU+p1WbU9XmmTf0YLHpcWakwGvA5ux/OuIBw=="
+    }
+   },
+   "trusted": [
+    "issuer"
+   ],
+   "store": false,
+   "revocation_lists": [
+    {
+     "signer": "issuer",
+     "envelope": {
+      "list": {
+       "version": "mandatekit/revocation-list/v0.2",
+       "list_id": "rl-alex",
+       "issued_at": "2026-10-12T11:55:00Z",
+       "revoked": [
+        "someone-else"
+       ]
+      },
+      "signature": {
+       "alg": "Ed25519",
+       "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+       "value": "qd8gfYIOrOAzKDttt4D/LFdbP8X7ASpHA9zy8hGblS9OB8w8wg+O0MbgK8MruQv/+1kL+b+IQJKbxpWFI7nWCw=="
+      }
+     }
+    }
+   ],
+   "steps": [
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "harbourline",
+      "category": "bank",
+      "amount": {
+       "value": 0,
+       "currency": "GBP"
+      },
+      "action": "read"
+     },
+     "expect": {
+      "decision": "deny",
+      "failed": [
+       "revocation_list"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "delegation: a narrower child signed by the delegate verifies against the root issuer",
+   "signer": "delegate",
+   "mandate": {
+    "mandate": {
+     "version": "mandatekit/v0.2",
+     "spec": "AP2-draft-2026Q2",
+     "mandate_id": "child-1",
+     "subject": {
+      "agent_id": "sub-agent"
+     },
+     "issued_at": "2026-10-11T12:00:00Z",
+     "expires_at": "2026-10-13T12:00:00Z",
+     "constraints": {
+      "intent": "pay the energy bill",
+      "categories": [
+       "bank",
+       "4900"
+      ],
+      "counterparties": {
+       "MID-10231": [
+        "read",
+        "pay"
+       ]
+      },
+      "max_amount": {
+       "value": 5000,
+       "currency": "GBP"
+      },
+      "actions": [
+       "read",
+       "pay"
+      ],
+      "delegation": {
+       "parent": {
+        "mandate": {
+         "version": "mandatekit/v0.2",
+         "spec": "AP2-draft-2026Q2",
+         "mandate_id": "root-1",
+         "subject": {
+          "agent_id": "agent-tidy",
+          "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc="
+         },
+         "issued_at": "2026-10-11T12:00:00Z",
+         "expires_at": "2026-10-19T12:00:00Z",
+         "constraints": {
+          "intent": "pay the energy bill",
+          "categories": [
+           "bank",
+           "4900"
+          ],
+          "counterparties": {
+           "harbourline": [
+            "read",
+            "submit",
+            "transfer"
+           ],
+           "MID-10231": [
+            "read",
+            "draft",
+            "pay"
+           ]
+          },
+          "max_amount": {
+           "value": 15000,
+           "currency": "GBP"
+          },
+          "actions": [
+           "read",
+           "draft",
+           "submit",
+           "pay",
+           "transfer"
+          ],
+          "approval": {
+           "actions": [
+            "submit"
+           ]
+          },
+          "delegation": {
+           "max_depth": 1
+          }
+         }
+        },
+        "signature": {
+         "alg": "Ed25519",
+         "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+         "value": "BWqk9VuvWui3nPuK5m09sijBW0fTmkRWI9Hbkebg2N2X2Fq9cLrMB9QMzjEqpCn7OdA+/LbDs1S1SUJtkjB/CA=="
+        }
+       }
+      }
+     }
+    },
+    "signature": {
+     "alg": "Ed25519",
+     "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc=",
+     "value": "Fg1F481RCFk3wB0bBQEwNH8ofQK8/fuZTV3mBE20QaC1Iv4G81Fam778mm4mgo1D8Bqs6nu97chV7KlZjomxAg=="
+    }
+   },
+   "trusted": [
+    "issuer"
+   ],
+   "store": false,
+   "revocation_lists": [],
+   "steps": [
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "MID-10231",
+      "category": "4900",
+      "amount": {
+       "value": 4000,
+       "currency": "GBP"
+      },
+      "action": "pay"
+     },
+     "expect": {
+      "decision": "allow",
+      "failed": []
+     }
+    },
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "MID-10231",
+      "category": "4900",
+      "amount": {
+       "value": 6000,
+       "currency": "GBP"
+      },
+      "action": "pay"
+     },
+     "expect": {
+      "decision": "deny",
+      "failed": [
+       "amount"
+      ]
+     },
+     "note": "the child's own cap"
+    },
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "harbourline",
+      "category": "bank",
+      "amount": {
+       "value": 0,
+       "currency": "GBP"
+      },
+      "action": "read"
+     },
+     "expect": {
+      "decision": "deny",
+      "failed": [
+       "counterparty_scope"
+      ]
+     },
+     "note": "the bank is outside the child's scope (categories were inherited)"
+    },
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "MID-10231",
+      "category": "4900",
+      "amount": {
+       "value": 0,
+       "currency": "GBP"
+      },
+      "action": "submit"
+     },
+     "expect": {
+      "decision": "deny",
+      "failed": [
+       "action",
+       "counterparty_scope"
+      ]
+     },
+     "note": "submit is not reachable, so dropping the approval rule was fine"
+    }
+   ]
+  },
+  {
+   "name": "delegation: the chain roots in an untrusted key",
+   "signer": "delegate",
+   "mandate": {
+    "mandate": {
+     "version": "mandatekit/v0.2",
+     "spec": "AP2-draft-2026Q2",
+     "mandate_id": "child-1",
+     "subject": {
+      "agent_id": "sub-agent"
+     },
+     "issued_at": "2026-10-11T12:00:00Z",
+     "expires_at": "2026-10-13T12:00:00Z",
+     "constraints": {
+      "intent": "pay the energy bill",
+      "categories": [
+       "bank",
+       "4900"
+      ],
+      "counterparties": {
+       "MID-10231": [
+        "read",
+        "pay"
+       ]
+      },
+      "max_amount": {
+       "value": 5000,
+       "currency": "GBP"
+      },
+      "actions": [
+       "read",
+       "pay"
+      ],
+      "delegation": {
+       "parent": {
+        "mandate": {
+         "version": "mandatekit/v0.2",
+         "spec": "AP2-draft-2026Q2",
+         "mandate_id": "root-1",
+         "subject": {
+          "agent_id": "agent-tidy",
+          "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc="
+         },
+         "issued_at": "2026-10-11T12:00:00Z",
+         "expires_at": "2026-10-19T12:00:00Z",
+         "constraints": {
+          "intent": "pay the energy bill",
+          "categories": [
+           "bank",
+           "4900"
+          ],
+          "counterparties": {
+           "harbourline": [
+            "read",
+            "submit",
+            "transfer"
+           ],
+           "MID-10231": [
+            "read",
+            "draft",
+            "pay"
+           ]
+          },
+          "max_amount": {
+           "value": 15000,
+           "currency": "GBP"
+          },
+          "actions": [
+           "read",
+           "draft",
+           "submit",
+           "pay",
+           "transfer"
+          ],
+          "approval": {
+           "actions": [
+            "submit"
+           ]
+          },
+          "delegation": {
+           "max_depth": 1
+          }
+         }
+        },
+        "signature": {
+         "alg": "Ed25519",
+         "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+         "value": "BWqk9VuvWui3nPuK5m09sijBW0fTmkRWI9Hbkebg2N2X2Fq9cLrMB9QMzjEqpCn7OdA+/LbDs1S1SUJtkjB/CA=="
+        }
+       }
+      }
+     }
+    },
+    "signature": {
+     "alg": "Ed25519",
+     "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc=",
+     "value": "Fg1F481RCFk3wB0bBQEwNH8ofQK8/fuZTV3mBE20QaC1Iv4G81Fam778mm4mgo1D8Bqs6nu97chV7KlZjomxAg=="
+    }
+   },
+   "trusted": [
+    "stranger"
+   ],
+   "store": false,
+   "revocation_lists": [],
+   "steps": [
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "MID-10231",
+      "category": "4900",
+      "amount": {
+       "value": 4000,
+       "currency": "GBP"
+      },
+      "action": "pay"
+     },
+     "expect": {
+      "decision": "deny",
+      "failed": [
+       "issuer_trusted"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "delegation: no trusted keys at all fails closed",
+   "signer": "delegate",
+   "mandate": {
+    "mandate": {
+     "version": "mandatekit/v0.2",
+     "spec": "AP2-draft-2026Q2",
+     "mandate_id": "child-1",
+     "subject": {
+      "agent_id": "sub-agent"
+     },
+     "issued_at": "2026-10-11T12:00:00Z",
+     "expires_at": "2026-10-13T12:00:00Z",
+     "constraints": {
+      "intent": "pay the energy bill",
+      "categories": [
+       "bank",
+       "4900"
+      ],
+      "counterparties": {
+       "MID-10231": [
+        "read",
+        "pay"
+       ]
+      },
+      "max_amount": {
+       "value": 5000,
+       "currency": "GBP"
+      },
+      "actions": [
+       "read",
+       "pay"
+      ],
+      "delegation": {
+       "parent": {
+        "mandate": {
+         "version": "mandatekit/v0.2",
+         "spec": "AP2-draft-2026Q2",
+         "mandate_id": "root-1",
+         "subject": {
+          "agent_id": "agent-tidy",
+          "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc="
+         },
+         "issued_at": "2026-10-11T12:00:00Z",
+         "expires_at": "2026-10-19T12:00:00Z",
+         "constraints": {
+          "intent": "pay the energy bill",
+          "categories": [
+           "bank",
+           "4900"
+          ],
+          "counterparties": {
+           "harbourline": [
+            "read",
+            "submit",
+            "transfer"
+           ],
+           "MID-10231": [
+            "read",
+            "draft",
+            "pay"
+           ]
+          },
+          "max_amount": {
+           "value": 15000,
+           "currency": "GBP"
+          },
+          "actions": [
+           "read",
+           "draft",
+           "submit",
+           "pay",
+           "transfer"
+          ],
+          "approval": {
+           "actions": [
+            "submit"
+           ]
+          },
+          "delegation": {
+           "max_depth": 1
+          }
+         }
+        },
+        "signature": {
+         "alg": "Ed25519",
+         "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+         "value": "BWqk9VuvWui3nPuK5m09sijBW0fTmkRWI9Hbkebg2N2X2Fq9cLrMB9QMzjEqpCn7OdA+/LbDs1S1SUJtkjB/CA=="
+        }
+       }
+      }
+     }
+    },
+    "signature": {
+     "alg": "Ed25519",
+     "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc=",
+     "value": "Fg1F481RCFk3wB0bBQEwNH8ofQK8/fuZTV3mBE20QaC1Iv4G81Fam778mm4mgo1D8Bqs6nu97chV7KlZjomxAg=="
+    }
+   },
+   "trusted": [],
+   "store": false,
+   "revocation_lists": [],
+   "steps": [
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "MID-10231",
+      "category": "4900",
+      "amount": {
+       "value": 4000,
+       "currency": "GBP"
+      },
+      "action": "pay"
+     },
+     "expect": {
+      "decision": "deny",
+      "failed": []
+     }
+    }
+   ]
+  },
+  {
+   "name": "delegation: a child that inherits everything is equal scope, which narrows",
+   "signer": "delegate",
+   "mandate": {
+    "mandate": {
+     "version": "mandatekit/v0.2",
+     "spec": "AP2-draft-2026Q2",
+     "mandate_id": "child-keep",
+     "subject": {
+      "agent_id": "sub-agent"
+     },
+     "issued_at": "2026-10-12T19:27:38Z",
+     "expires_at": "2026-10-19T12:00:00Z",
+     "constraints": {
+      "intent": "pay the energy bill",
+      "categories": [
+       "bank",
+       "4900"
+      ],
+      "counterparties": {
+       "harbourline": [
+        "read",
+        "submit",
+        "transfer"
+       ],
+       "MID-10231": [
+        "read",
+        "draft",
+        "pay"
+       ]
+      },
+      "max_amount": {
+       "value": 15000,
+       "currency": "GBP"
+      },
+      "actions": [
+       "read",
+       "draft",
+       "submit",
+       "pay",
+       "transfer"
+      ],
+      "approval": {
+       "actions": [
+        "submit"
+       ]
+      },
+      "delegation": {
+       "parent": {
+        "mandate": {
+         "version": "mandatekit/v0.2",
+         "spec": "AP2-draft-2026Q2",
+         "mandate_id": "root-1",
+         "subject": {
+          "agent_id": "agent-tidy",
+          "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc="
+         },
+         "issued_at": "2026-10-11T12:00:00Z",
+         "expires_at": "2026-10-19T12:00:00Z",
+         "constraints": {
+          "intent": "pay the energy bill",
+          "categories": [
+           "bank",
+           "4900"
+          ],
+          "counterparties": {
+           "harbourline": [
+            "read",
+            "submit",
+            "transfer"
+           ],
+           "MID-10231": [
+            "read",
+            "draft",
+            "pay"
+           ]
+          },
+          "max_amount": {
+           "value": 15000,
+           "currency": "GBP"
+          },
+          "actions": [
+           "read",
+           "draft",
+           "submit",
+           "pay",
+           "transfer"
+          ],
+          "approval": {
+           "actions": [
+            "submit"
+           ]
+          },
+          "delegation": {
+           "max_depth": 1
+          }
+         }
+        },
+        "signature": {
+         "alg": "Ed25519",
+         "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+         "value": "BWqk9VuvWui3nPuK5m09sijBW0fTmkRWI9Hbkebg2N2X2Fq9cLrMB9QMzjEqpCn7OdA+/LbDs1S1SUJtkjB/CA=="
+        }
+       }
+      }
+     }
+    },
+    "signature": {
+     "alg": "Ed25519",
+     "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc=",
+     "value": "LvB1IbtvVgGdvQOzwtU/JiN8E0p8ekfDWjvOgKXwW76RVrLiK/Ig2W/QN1jgwaNy+KLGUqUAFOloqriQwj/RAg=="
+    }
+   },
+   "trusted": [
+    "issuer"
+   ],
+   "store": false,
+   "revocation_lists": [],
+   "steps": [
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "harbourline",
+      "category": "bank",
+      "amount": {
+       "value": 0,
+       "currency": "GBP"
+      },
+      "action": "read"
+     },
+     "expect": {
+      "decision": "allow",
+      "failed": []
+     }
+    },
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "harbourline",
+      "category": "bank",
+      "amount": {
+       "value": 0,
+       "currency": "GBP"
+      },
+      "action": "submit"
+     },
+     "expect": {
+      "decision": "ask",
+      "failed": [
+       "approval"
+      ]
+     },
+     "note": "the inherited approval rule still asks"
+    },
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "harbourline",
+      "category": "bank",
+      "amount": {
+       "value": 8400,
+       "currency": "GBP"
+      },
+      "action": "pay"
+     },
+     "expect": {
+      "decision": "deny",
+      "failed": [
+       "counterparty_scope"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "delegation_scope: a child cap above the parent's",
+   "signer": "delegate",
+   "mandate": {
+    "mandate": {
+     "version": "mandatekit/v0.2",
+     "spec": "AP2-draft-2026Q2",
+     "mandate_id": "child-cap",
+     "subject": {
+      "agent_id": "sub-agent"
+     },
+     "issued_at": "2026-10-11T12:00:00Z",
+     "expires_at": "2026-10-13T12:00:00Z",
+     "constraints": {
+      "intent": "pay the energy bill",
+      "categories": [
+       "bank",
+       "4900"
+      ],
+      "counterparties": {
+       "MID-10231": [
+        "read",
+        "pay"
+       ]
+      },
+      "max_amount": {
+       "value": 20000,
+       "currency": "GBP"
+      },
+      "actions": [
+       "read",
+       "pay"
+      ],
+      "delegation": {
+       "parent": {
+        "mandate": {
+         "version": "mandatekit/v0.2",
+         "spec": "AP2-draft-2026Q2",
+         "mandate_id": "root-1",
+         "subject": {
+          "agent_id": "agent-tidy",
+          "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc="
+         },
+         "issued_at": "2026-10-11T12:00:00Z",
+         "expires_at": "2026-10-19T12:00:00Z",
+         "constraints": {
+          "intent": "pay the energy bill",
+          "categories": [
+           "bank",
+           "4900"
+          ],
+          "counterparties": {
+           "harbourline": [
+            "read",
+            "submit",
+            "transfer"
+           ],
+           "MID-10231": [
+            "read",
+            "draft",
+            "pay"
+           ]
+          },
+          "max_amount": {
+           "value": 15000,
+           "currency": "GBP"
+          },
+          "actions": [
+           "read",
+           "draft",
+           "submit",
+           "pay",
+           "transfer"
+          ],
+          "approval": {
+           "actions": [
+            "submit"
+           ]
+          },
+          "delegation": {
+           "max_depth": 1
+          }
+         }
+        },
+        "signature": {
+         "alg": "Ed25519",
+         "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+         "value": "BWqk9VuvWui3nPuK5m09sijBW0fTmkRWI9Hbkebg2N2X2Fq9cLrMB9QMzjEqpCn7OdA+/LbDs1S1SUJtkjB/CA=="
+        }
+       }
+      }
+     }
+    },
+    "signature": {
+     "alg": "Ed25519",
+     "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc=",
+     "value": "FAQbwIzUXUyx1aWs54VmJNzJQrJdZYg1exlBle3kaWRUvL8GF8Y4q7cu0EIcZzCksKVehWQm5andP0o1bpXMBg=="
+    }
+   },
+   "trusted": [
+    "issuer"
+   ],
+   "store": false,
+   "revocation_lists": [],
+   "steps": [
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "MID-10231",
+      "category": "4900",
+      "amount": {
+       "value": 4000,
+       "currency": "GBP"
+      },
+      "action": "pay"
+     },
+     "expect": {
+      "decision": "deny",
+      "failed": [
+       "delegation_scope",
+       "issuer_trusted"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "delegation_scope: a child with no cap under a capped parent",
+   "signer": "delegate",
+   "mandate": {
+    "mandate": {
+     "version": "mandatekit/v0.2",
+     "spec": "AP2-draft-2026Q2",
+     "mandate_id": "child-nocap",
+     "subject": {
+      "agent_id": "sub-agent"
+     },
+     "issued_at": "2026-10-12T19:27:38Z",
+     "expires_at": "2026-10-19T12:00:00Z",
+     "constraints": {
+      "intent": "pay the energy bill",
+      "categories": [
+       "bank",
+       "4900"
+      ],
+      "counterparties": {
+       "MID-10231": [
+        "read"
+       ]
+      },
+      "actions": [
+       "read"
+      ],
+      "delegation": {
+       "parent": {
+        "mandate": {
+         "version": "mandatekit/v0.2",
+         "spec": "AP2-draft-2026Q2",
+         "mandate_id": "root-1",
+         "subject": {
+          "agent_id": "agent-tidy",
+          "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc="
+         },
+         "issued_at": "2026-10-11T12:00:00Z",
+         "expires_at": "2026-10-19T12:00:00Z",
+         "constraints": {
+          "intent": "pay the energy bill",
+          "categories": [
+           "bank",
+           "4900"
+          ],
+          "counterparties": {
+           "harbourline": [
+            "read",
+            "submit",
+            "transfer"
+           ],
+           "MID-10231": [
+            "read",
+            "draft",
+            "pay"
+           ]
+          },
+          "max_amount": {
+           "value": 15000,
+           "currency": "GBP"
+          },
+          "actions": [
+           "read",
+           "draft",
+           "submit",
+           "pay",
+           "transfer"
+          ],
+          "approval": {
+           "actions": [
+            "submit"
+           ]
+          },
+          "delegation": {
+           "max_depth": 1
+          }
+         }
+        },
+        "signature": {
+         "alg": "Ed25519",
+         "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+         "value": "BWqk9VuvWui3nPuK5m09sijBW0fTmkRWI9Hbkebg2N2X2Fq9cLrMB9QMzjEqpCn7OdA+/LbDs1S1SUJtkjB/CA=="
+        }
+       }
+      }
+     }
+    },
+    "signature": {
+     "alg": "Ed25519",
+     "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc=",
+     "value": "oPI7XHkDcJTs7yxIS4sBKkfQOImqtOG2+VFp4mUopJAfxyuDnB+xErKWLexq596/qtKzWzipFfSwwaPXOdQ9DQ=="
+    }
+   },
+   "trusted": [
+    "issuer"
+   ],
+   "store": false,
+   "revocation_lists": [],
+   "steps": [
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "MID-10231",
+      "category": "4900",
+      "amount": {
+       "value": 0,
+       "currency": "GBP"
+      },
+      "action": "read"
+     },
+     "expect": {
+      "decision": "deny",
+      "failed": [
+       "delegation_scope",
+       "issuer_trusted"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "delegation_scope: a child adds a verb the parent never allowed",
+   "signer": "delegate",
+   "mandate": {
+    "mandate": {
+     "version": "mandatekit/v0.2",
+     "spec": "AP2-draft-2026Q2",
+     "mandate_id": "child-verb",
+     "subject": {
+      "agent_id": "sub-agent"
+     },
+     "issued_at": "2026-10-11T12:00:00Z",
+     "expires_at": "2026-10-13T12:00:00Z",
+     "constraints": {
+      "intent": "pay the energy bill",
+      "categories": [
+       "bank",
+       "4900"
+      ],
+      "counterparties": {
+       "MID-10231": [
+        "read",
+        "cancel"
+       ]
+      },
+      "max_amount": {
+       "value": 5000,
+       "currency": "GBP"
+      },
+      "actions": [
+       "read",
+       "cancel"
+      ],
+      "delegation": {
+       "parent": {
+        "mandate": {
+         "version": "mandatekit/v0.2",
+         "spec": "AP2-draft-2026Q2",
+         "mandate_id": "root-1",
+         "subject": {
+          "agent_id": "agent-tidy",
+          "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc="
+         },
+         "issued_at": "2026-10-11T12:00:00Z",
+         "expires_at": "2026-10-19T12:00:00Z",
+         "constraints": {
+          "intent": "pay the energy bill",
+          "categories": [
+           "bank",
+           "4900"
+          ],
+          "counterparties": {
+           "harbourline": [
+            "read",
+            "submit",
+            "transfer"
+           ],
+           "MID-10231": [
+            "read",
+            "draft",
+            "pay"
+           ]
+          },
+          "max_amount": {
+           "value": 15000,
+           "currency": "GBP"
+          },
+          "actions": [
+           "read",
+           "draft",
+           "submit",
+           "pay",
+           "transfer"
+          ],
+          "approval": {
+           "actions": [
+            "submit"
+           ]
+          },
+          "delegation": {
+           "max_depth": 1
+          }
+         }
+        },
+        "signature": {
+         "alg": "Ed25519",
+         "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+         "value": "BWqk9VuvWui3nPuK5m09sijBW0fTmkRWI9Hbkebg2N2X2Fq9cLrMB9QMzjEqpCn7OdA+/LbDs1S1SUJtkjB/CA=="
+        }
+       }
+      }
+     }
+    },
+    "signature": {
+     "alg": "Ed25519",
+     "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc=",
+     "value": "L4GxgT2p0SnlWXecEHiR902uPkwxy2R499jiXczRXCJ3AqYsoN/YGkDlwWMus7+JhOtAxEPmA10DkDUB4fa4BQ=="
+    }
+   },
+   "trusted": [
+    "issuer"
+   ],
+   "store": false,
+   "revocation_lists": [],
+   "steps": [
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "MID-10231",
+      "category": "4900",
+      "amount": {
+       "value": 0,
+       "currency": "GBP"
+      },
+      "action": "read"
+     },
+     "expect": {
+      "decision": "deny",
+      "failed": [
+       "delegation_scope",
+       "issuer_trusted"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "delegation_scope: a child allows a verb at a counterparty the parent scoped more tightly",
+   "signer": "delegate",
+   "mandate": {
+    "mandate": {
+     "version": "mandatekit/v0.2",
+     "spec": "AP2-draft-2026Q2",
+     "mandate_id": "child-bank-pay",
+     "subject": {
+      "agent_id": "sub-agent"
+     },
+     "issued_at": "2026-10-11T12:00:00Z",
+     "expires_at": "2026-10-13T12:00:00Z",
+     "constraints": {
+      "intent": "pay the energy bill",
+      "categories": [
+       "bank",
+       "4900"
+      ],
+      "counterparties": {
+       "harbourline": [
+        "read",
+        "pay"
+       ]
+      },
+      "max_amount": {
+       "value": 5000,
+       "currency": "GBP"
+      },
+      "actions": [
+       "read",
+       "pay"
+      ],
+      "delegation": {
+       "parent": {
+        "mandate": {
+         "version": "mandatekit/v0.2",
+         "spec": "AP2-draft-2026Q2",
+         "mandate_id": "root-1",
+         "subject": {
+          "agent_id": "agent-tidy",
+          "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc="
+         },
+         "issued_at": "2026-10-11T12:00:00Z",
+         "expires_at": "2026-10-19T12:00:00Z",
+         "constraints": {
+          "intent": "pay the energy bill",
+          "categories": [
+           "bank",
+           "4900"
+          ],
+          "counterparties": {
+           "harbourline": [
+            "read",
+            "submit",
+            "transfer"
+           ],
+           "MID-10231": [
+            "read",
+            "draft",
+            "pay"
+           ]
+          },
+          "max_amount": {
+           "value": 15000,
+           "currency": "GBP"
+          },
+          "actions": [
+           "read",
+           "draft",
+           "submit",
+           "pay",
+           "transfer"
+          ],
+          "approval": {
+           "actions": [
+            "submit"
+           ]
+          },
+          "delegation": {
+           "max_depth": 1
+          }
+         }
+        },
+        "signature": {
+         "alg": "Ed25519",
+         "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+         "value": "BWqk9VuvWui3nPuK5m09sijBW0fTmkRWI9Hbkebg2N2X2Fq9cLrMB9QMzjEqpCn7OdA+/LbDs1S1SUJtkjB/CA=="
+        }
+       }
+      }
+     }
+    },
+    "signature": {
+     "alg": "Ed25519",
+     "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc=",
+     "value": "jYApu+jHZTASu6cU0Mx4M9HbD1zTcLvufBJz9yIX69tuolIv1HkxvwExpKIdaM7v9z+q5CUW87LI7hQviUkGBw=="
+    }
+   },
+   "trusted": [
+    "issuer"
+   ],
+   "store": false,
+   "revocation_lists": [],
+   "steps": [
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "harbourline",
+      "category": "bank",
+      "amount": {
+       "value": 0,
+       "currency": "GBP"
+      },
+      "action": "read"
+     },
+     "expect": {
+      "decision": "deny",
+      "failed": [
+       "delegation_scope",
+       "issuer_trusted"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "delegation_scope: a child adds a counterparty",
+   "signer": "delegate",
+   "mandate": {
+    "mandate": {
+     "version": "mandatekit/v0.2",
+     "spec": "AP2-draft-2026Q2",
+     "mandate_id": "child-cp",
+     "subject": {
+      "agent_id": "sub-agent"
+     },
+     "issued_at": "2026-10-11T12:00:00Z",
+     "expires_at": "2026-10-13T12:00:00Z",
+     "constraints": {
+      "intent": "pay the energy bill",
+      "categories": [
+       "bank",
+       "4900"
+      ],
+      "counterparties": {
+       "MID-10231": [
+        "read"
+       ],
+       "MID-41120": [
+        "pay"
+       ]
+      },
+      "max_amount": {
+       "value": 5000,
+       "currency": "GBP"
+      },
+      "actions": [
+       "read",
+       "pay"
+      ],
+      "delegation": {
+       "parent": {
+        "mandate": {
+         "version": "mandatekit/v0.2",
+         "spec": "AP2-draft-2026Q2",
+         "mandate_id": "root-1",
+         "subject": {
+          "agent_id": "agent-tidy",
+          "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc="
+         },
+         "issued_at": "2026-10-11T12:00:00Z",
+         "expires_at": "2026-10-19T12:00:00Z",
+         "constraints": {
+          "intent": "pay the energy bill",
+          "categories": [
+           "bank",
+           "4900"
+          ],
+          "counterparties": {
+           "harbourline": [
+            "read",
+            "submit",
+            "transfer"
+           ],
+           "MID-10231": [
+            "read",
+            "draft",
+            "pay"
+           ]
+          },
+          "max_amount": {
+           "value": 15000,
+           "currency": "GBP"
+          },
+          "actions": [
+           "read",
+           "draft",
+           "submit",
+           "pay",
+           "transfer"
+          ],
+          "approval": {
+           "actions": [
+            "submit"
+           ]
+          },
+          "delegation": {
+           "max_depth": 1
+          }
+         }
+        },
+        "signature": {
+         "alg": "Ed25519",
+         "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+         "value": "BWqk9VuvWui3nPuK5m09sijBW0fTmkRWI9Hbkebg2N2X2Fq9cLrMB9QMzjEqpCn7OdA+/LbDs1S1SUJtkjB/CA=="
+        }
+       }
+      }
+     }
+    },
+    "signature": {
+     "alg": "Ed25519",
+     "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc=",
+     "value": "BGfOlbRvezJfG/pmhBF1cGsE3tyNQYtB7SnBULfc84KGza9MQxH4vyiD4hvKVG6YdVJkDo408RC2JjY/2PM8Aw=="
+    }
+   },
+   "trusted": [
+    "issuer"
+   ],
+   "store": false,
+   "revocation_lists": [],
+   "steps": [
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "MID-10231",
+      "category": "4900",
+      "amount": {
+       "value": 0,
+       "currency": "GBP"
+      },
+      "action": "read"
+     },
+     "expect": {
+      "decision": "deny",
+      "failed": [
+       "delegation_scope",
+       "issuer_trusted"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "delegation_scope: a child that replaces the per-verb map with a flat list widens it",
+   "signer": "delegate",
+   "mandate": {
+    "mandate": {
+     "version": "mandatekit/v0.2",
+     "spec": "AP2-draft-2026Q2",
+     "mandate_id": "child-flat",
+     "subject": {
+      "agent_id": "sub-agent"
+     },
+     "issued_at": "2026-10-11T12:00:00Z",
+     "expires_at": "2026-10-13T12:00:00Z",
+     "constraints": {
+      "intent": "pay the energy bill",
+      "categories": [
+       "bank",
+       "4900"
+      ],
+      "merchants": {
+       "allow": [
+        "harbourline"
+       ]
+      },
+      "max_amount": {
+       "value": 5000,
+       "currency": "GBP"
+      },
+      "actions": [
+       "read",
+       "pay"
+      ],
+      "delegation": {
+       "parent": {
+        "mandate": {
+         "version": "mandatekit/v0.2",
+         "spec": "AP2-draft-2026Q2",
+         "mandate_id": "root-1",
+         "subject": {
+          "agent_id": "agent-tidy",
+          "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc="
+         },
+         "issued_at": "2026-10-11T12:00:00Z",
+         "expires_at": "2026-10-19T12:00:00Z",
+         "constraints": {
+          "intent": "pay the energy bill",
+          "categories": [
+           "bank",
+           "4900"
+          ],
+          "counterparties": {
+           "harbourline": [
+            "read",
+            "submit",
+            "transfer"
+           ],
+           "MID-10231": [
+            "read",
+            "draft",
+            "pay"
+           ]
+          },
+          "max_amount": {
+           "value": 15000,
+           "currency": "GBP"
+          },
+          "actions": [
+           "read",
+           "draft",
+           "submit",
+           "pay",
+           "transfer"
+          ],
+          "approval": {
+           "actions": [
+            "submit"
+           ]
+          },
+          "delegation": {
+           "max_depth": 1
+          }
+         }
+        },
+        "signature": {
+         "alg": "Ed25519",
+         "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+         "value": "BWqk9VuvWui3nPuK5m09sijBW0fTmkRWI9Hbkebg2N2X2Fq9cLrMB9QMzjEqpCn7OdA+/LbDs1S1SUJtkjB/CA=="
+        }
+       }
+      }
+     }
+    },
+    "signature": {
+     "alg": "Ed25519",
+     "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc=",
+     "value": "c2GYZ6sHXBZJbdFAyJAg8LyahEsliNvIWlTwUjh331GhuiW4Tbc+fn2et6dkMnr3XfejgLlQUjffB9fJz9FwCw=="
+    }
+   },
+   "trusted": [
+    "issuer"
+   ],
+   "store": false,
+   "revocation_lists": [],
+   "steps": [
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "harbourline",
+      "category": "bank",
+      "amount": {
+       "value": 0,
+       "currency": "GBP"
+      },
+      "action": "read"
+     },
+     "expect": {
+      "decision": "deny",
+      "failed": [
+       "delegation_scope",
+       "issuer_trusted"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "delegation_scope: a child expiring after its parent",
+   "signer": "delegate",
+   "mandate": {
+    "mandate": {
+     "version": "mandatekit/v0.2",
+     "spec": "AP2-draft-2026Q2",
+     "mandate_id": "child-late",
+     "subject": {
+      "agent_id": "sub-agent"
+     },
+     "issued_at": "2026-10-11T12:00:00Z",
+     "expires_at": "2026-10-20T12:00:00Z",
+     "constraints": {
+      "intent": "pay the energy bill",
+      "categories": [
+       "bank",
+       "4900"
+      ],
+      "counterparties": {
+       "MID-10231": [
+        "read",
+        "pay"
+       ]
+      },
+      "max_amount": {
+       "value": 5000,
+       "currency": "GBP"
+      },
+      "actions": [
+       "read",
+       "pay"
+      ],
+      "delegation": {
+       "parent": {
+        "mandate": {
+         "version": "mandatekit/v0.2",
+         "spec": "AP2-draft-2026Q2",
+         "mandate_id": "root-1",
+         "subject": {
+          "agent_id": "agent-tidy",
+          "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc="
+         },
+         "issued_at": "2026-10-11T12:00:00Z",
+         "expires_at": "2026-10-19T12:00:00Z",
+         "constraints": {
+          "intent": "pay the energy bill",
+          "categories": [
+           "bank",
+           "4900"
+          ],
+          "counterparties": {
+           "harbourline": [
+            "read",
+            "submit",
+            "transfer"
+           ],
+           "MID-10231": [
+            "read",
+            "draft",
+            "pay"
+           ]
+          },
+          "max_amount": {
+           "value": 15000,
+           "currency": "GBP"
+          },
+          "actions": [
+           "read",
+           "draft",
+           "submit",
+           "pay",
+           "transfer"
+          ],
+          "approval": {
+           "actions": [
+            "submit"
+           ]
+          },
+          "delegation": {
+           "max_depth": 1
+          }
+         }
+        },
+        "signature": {
+         "alg": "Ed25519",
+         "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+         "value": "BWqk9VuvWui3nPuK5m09sijBW0fTmkRWI9Hbkebg2N2X2Fq9cLrMB9QMzjEqpCn7OdA+/LbDs1S1SUJtkjB/CA=="
+        }
+       }
+      }
+     }
+    },
+    "signature": {
+     "alg": "Ed25519",
+     "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc=",
+     "value": "khAnF7D3P/bJ4fHcFJi6Bx3zzAPzJwLQeLlyPPzJycYTfxfl2Sj5Vs29udrtwxLyo5C5aseY1sgF0u0pAxHlDQ=="
+    }
+   },
+   "trusted": [
+    "issuer"
+   ],
+   "store": false,
+   "revocation_lists": [],
+   "steps": [
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "MID-10231",
+      "category": "4900",
+      "amount": {
+       "value": 4000,
+       "currency": "GBP"
+      },
+      "action": "pay"
+     },
+     "expect": {
+      "decision": "deny",
+      "failed": [
+       "delegation_scope",
+       "issuer_trusted"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "delegation_scope: a child adds a category",
+   "signer": "delegate",
+   "mandate": {
+    "mandate": {
+     "version": "mandatekit/v0.2",
+     "spec": "AP2-draft-2026Q2",
+     "mandate_id": "child-cat",
+     "subject": {
+      "agent_id": "sub-agent"
+     },
+     "issued_at": "2026-10-11T12:00:00Z",
+     "expires_at": "2026-10-13T12:00:00Z",
+     "constraints": {
+      "intent": "pay the energy bill",
+      "categories": [
+       "bank",
+       "4900",
+       "5411"
+      ],
+      "counterparties": {
+       "MID-10231": [
+        "read",
+        "pay"
+       ]
+      },
+      "max_amount": {
+       "value": 5000,
+       "currency": "GBP"
+      },
+      "actions": [
+       "read",
+       "pay"
+      ],
+      "delegation": {
+       "parent": {
+        "mandate": {
+         "version": "mandatekit/v0.2",
+         "spec": "AP2-draft-2026Q2",
+         "mandate_id": "root-1",
+         "subject": {
+          "agent_id": "agent-tidy",
+          "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc="
+         },
+         "issued_at": "2026-10-11T12:00:00Z",
+         "expires_at": "2026-10-19T12:00:00Z",
+         "constraints": {
+          "intent": "pay the energy bill",
+          "categories": [
+           "bank",
+           "4900"
+          ],
+          "counterparties": {
+           "harbourline": [
+            "read",
+            "submit",
+            "transfer"
+           ],
+           "MID-10231": [
+            "read",
+            "draft",
+            "pay"
+           ]
+          },
+          "max_amount": {
+           "value": 15000,
+           "currency": "GBP"
+          },
+          "actions": [
+           "read",
+           "draft",
+           "submit",
+           "pay",
+           "transfer"
+          ],
+          "approval": {
+           "actions": [
+            "submit"
+           ]
+          },
+          "delegation": {
+           "max_depth": 1
+          }
+         }
+        },
+        "signature": {
+         "alg": "Ed25519",
+         "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+         "value": "BWqk9VuvWui3nPuK5m09sijBW0fTmkRWI9Hbkebg2N2X2Fq9cLrMB9QMzjEqpCn7OdA+/LbDs1S1SUJtkjB/CA=="
+        }
+       }
+      }
+     }
+    },
+    "signature": {
+     "alg": "Ed25519",
+     "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc=",
+     "value": "3UMIJeJg6hJlUmX+Hr4xet8UXVkyMRj0BTx9q2OnupYKFREJb0jtz1dmpD7FShrPkoX6m/kiesssE6KDTmUnCg=="
+    }
+   },
+   "trusted": [
+    "issuer"
+   ],
+   "store": false,
+   "revocation_lists": [],
+   "steps": [
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "MID-10231",
+      "category": "4900",
+      "amount": {
+       "value": 4000,
+       "currency": "GBP"
+      },
+      "action": "pay"
+     },
+     "expect": {
+      "decision": "deny",
+      "failed": [
+       "delegation_scope",
+       "issuer_trusted"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "delegation_scope: a child drops an approval rule for a verb it can still reach",
+   "signer": "delegate",
+   "mandate": {
+    "mandate": {
+     "version": "mandatekit/v0.2",
+     "spec": "AP2-draft-2026Q2",
+     "mandate_id": "child-drop-approval",
+     "subject": {
+      "agent_id": "sub-agent"
+     },
+     "issued_at": "2026-10-11T12:00:00Z",
+     "expires_at": "2026-10-13T12:00:00Z",
+     "constraints": {
+      "intent": "pay the energy bill",
+      "categories": [
+       "bank",
+       "4900"
+      ],
+      "counterparties": {
+       "harbourline": [
+        "submit"
+       ]
+      },
+      "max_amount": {
+       "value": 5000,
+       "currency": "GBP"
+      },
+      "actions": [
+       "submit"
+      ],
+      "delegation": {
+       "parent": {
+        "mandate": {
+         "version": "mandatekit/v0.2",
+         "spec": "AP2-draft-2026Q2",
+         "mandate_id": "root-1",
+         "subject": {
+          "agent_id": "agent-tidy",
+          "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc="
+         },
+         "issued_at": "2026-10-11T12:00:00Z",
+         "expires_at": "2026-10-19T12:00:00Z",
+         "constraints": {
+          "intent": "pay the energy bill",
+          "categories": [
+           "bank",
+           "4900"
+          ],
+          "counterparties": {
+           "harbourline": [
+            "read",
+            "submit",
+            "transfer"
+           ],
+           "MID-10231": [
+            "read",
+            "draft",
+            "pay"
+           ]
+          },
+          "max_amount": {
+           "value": 15000,
+           "currency": "GBP"
+          },
+          "actions": [
+           "read",
+           "draft",
+           "submit",
+           "pay",
+           "transfer"
+          ],
+          "approval": {
+           "actions": [
+            "submit"
+           ]
+          },
+          "delegation": {
+           "max_depth": 1
+          }
+         }
+        },
+        "signature": {
+         "alg": "Ed25519",
+         "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+         "value": "BWqk9VuvWui3nPuK5m09sijBW0fTmkRWI9Hbkebg2N2X2Fq9cLrMB9QMzjEqpCn7OdA+/LbDs1S1SUJtkjB/CA=="
+        }
+       }
+      }
+     }
+    },
+    "signature": {
+     "alg": "Ed25519",
+     "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc=",
+     "value": "u2aPQTzah9uBg8Ab7TptTBsOtTVd2nEU3dUMGQjQ7/X1yPzWYAPZQlJHjOlOqIpOhFN41rPlejjh8LAz1t7xBA=="
+    }
+   },
+   "trusted": [
+    "issuer"
+   ],
+   "store": false,
+   "revocation_lists": [],
+   "steps": [
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "harbourline",
+      "category": "bank",
+      "amount": {
+       "value": 0,
+       "currency": "GBP"
+      },
+      "action": "submit"
+     },
+     "expect": {
+      "decision": "deny",
+      "failed": [
+       "delegation_scope",
+       "issuer_trusted"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "delegation_scope: a child declares a depth the parent has not got",
+   "signer": "delegate",
+   "mandate": {
+    "mandate": {
+     "version": "mandatekit/v0.2",
+     "spec": "AP2-draft-2026Q2",
+     "mandate_id": "child-deep",
+     "subject": {
+      "agent_id": "sub-agent",
+      "public_key": "JUO5L/EJVRFHatyDadtt3JM2ZaEZeN2hQE7hBmypVZ0="
+     },
+     "issued_at": "2026-10-12T19:27:38Z",
+     "expires_at": "2026-10-19T12:00:00Z",
+     "constraints": {
+      "intent": "pay the energy bill",
+      "categories": [
+       "bank",
+       "4900"
+      ],
+      "counterparties": {
+       "MID-10231": [
+        "read"
+       ]
+      },
+      "max_amount": {
+       "value": 15000,
+       "currency": "GBP"
+      },
+      "actions": [
+       "read"
+      ],
+      "delegation": {
+       "parent": {
+        "mandate": {
+         "version": "mandatekit/v0.2",
+         "spec": "AP2-draft-2026Q2",
+         "mandate_id": "root-1",
+         "subject": {
+          "agent_id": "agent-tidy",
+          "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc="
+         },
+         "issued_at": "2026-10-11T12:00:00Z",
+         "expires_at": "2026-10-19T12:00:00Z",
+         "constraints": {
+          "intent": "pay the energy bill",
+          "categories": [
+           "bank",
+           "4900"
+          ],
+          "counterparties": {
+           "harbourline": [
+            "read",
+            "submit",
+            "transfer"
+           ],
+           "MID-10231": [
+            "read",
+            "draft",
+            "pay"
+           ]
+          },
+          "max_amount": {
+           "value": 15000,
+           "currency": "GBP"
+          },
+          "actions": [
+           "read",
+           "draft",
+           "submit",
+           "pay",
+           "transfer"
+          ],
+          "approval": {
+           "actions": [
+            "submit"
+           ]
+          },
+          "delegation": {
+           "max_depth": 1
+          }
+         }
+        },
+        "signature": {
+         "alg": "Ed25519",
+         "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+         "value": "BWqk9VuvWui3nPuK5m09sijBW0fTmkRWI9Hbkebg2N2X2Fq9cLrMB9QMzjEqpCn7OdA+/LbDs1S1SUJtkjB/CA=="
+        }
+       },
+       "max_depth": 1
+      }
+     }
+    },
+    "signature": {
+     "alg": "Ed25519",
+     "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc=",
+     "value": "HIG2vkR79CnxJkPGhwRLDa/PInKTwDDnk+8JZHp320dtucCNF904nGmMOilkJ4T7yLuINbTUZAk3HtiL9IfnCg=="
+    }
+   },
+   "trusted": [
+    "issuer"
+   ],
+   "store": false,
+   "revocation_lists": [],
+   "steps": [
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "MID-10231",
+      "category": "4900",
+      "amount": {
+       "value": 0,
+       "currency": "GBP"
+      },
+      "action": "read"
+     },
+     "expect": {
+      "decision": "deny",
+      "failed": [
+       "delegation_scope",
+       "issuer_trusted"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "delegation_scope: a child without not_before under a parent that has one",
+   "signer": "delegate",
+   "mandate": {
+    "mandate": {
+     "version": "mandatekit/v0.2",
+     "spec": "AP2-draft-2026Q2",
+     "mandate_id": "child-no-nb",
+     "subject": {
+      "agent_id": "sub-agent"
+     },
+     "issued_at": "2026-10-11T12:00:00Z",
+     "expires_at": "2026-10-13T12:00:00Z",
+     "constraints": {
+      "intent": "pay the energy bill",
+      "categories": [
+       "bank",
+       "4900"
+      ],
+      "counterparties": {
+       "MID-10231": [
+        "read",
+        "pay"
+       ]
+      },
+      "max_amount": {
+       "value": 5000,
+       "currency": "GBP"
+      },
+      "actions": [
+       "read",
+       "pay"
+      ],
+      "delegation": {
+       "parent": {
+        "mandate": {
+         "version": "mandatekit/v0.2",
+         "spec": "AP2-draft-2026Q2",
+         "mandate_id": "root-window",
+         "subject": {
+          "agent_id": "agent-tidy",
+          "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc="
+         },
+         "issued_at": "2026-10-11T12:00:00Z",
+         "expires_at": "2026-10-19T12:00:00Z",
+         "constraints": {
+          "intent": "pay the energy bill",
+          "categories": [
+           "bank",
+           "4900"
+          ],
+          "counterparties": {
+           "harbourline": [
+            "read",
+            "submit",
+            "transfer"
+           ],
+           "MID-10231": [
+            "read",
+            "draft",
+            "pay"
+           ]
+          },
+          "max_amount": {
+           "value": 15000,
+           "currency": "GBP"
+          },
+          "actions": [
+           "read",
+           "draft",
+           "submit",
+           "pay",
+           "transfer"
+          ],
+          "approval": {
+           "actions": [
+            "submit"
+           ]
+          },
+          "not_before": "2026-10-12T11:00:00Z",
+          "delegation": {
+           "max_depth": 1
+          }
+         }
+        },
+        "signature": {
+         "alg": "Ed25519",
+         "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+         "value": "W3fqKL6zWVp6qEgdp1hUgho9ST3JgVpN8NnQl4ajRX1wQKsEjngkuNz/nC0wTjSCaU1+lT6ttzH4SgMwcZMGDQ=="
+        }
+       }
+      }
+     }
+    },
+    "signature": {
+     "alg": "Ed25519",
+     "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc=",
+     "value": "oedhfGtoai11fZt7ovJBAZ0JqDqOdE1b3EWVhEdnST4h9mn5SNB8d5kANPF+RXvbQuexRDSooRiU3iaMghuBAQ=="
+    }
+   },
+   "trusted": [
+    "issuer"
+   ],
+   "store": false,
+   "revocation_lists": [],
+   "steps": [
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "MID-10231",
+      "category": "4900",
+      "amount": {
+       "value": 4000,
+       "currency": "GBP"
+      },
+      "action": "pay"
+     },
+     "expect": {
+      "decision": "deny",
+      "failed": [
+       "delegation_scope",
+       "issuer_trusted"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "delegation: a child whose window sits inside the parent's",
+   "signer": "delegate",
+   "mandate": {
+    "mandate": {
+     "version": "mandatekit/v0.2",
+     "spec": "AP2-draft-2026Q2",
+     "mandate_id": "child-nb",
+     "subject": {
+      "agent_id": "sub-agent"
+     },
+     "issued_at": "2026-10-11T12:00:00Z",
+     "expires_at": "2026-10-13T12:00:00Z",
+     "constraints": {
+      "intent": "pay the energy bill",
+      "categories": [
+       "bank",
+       "4900"
+      ],
+      "counterparties": {
+       "MID-10231": [
+        "read",
+        "pay"
+       ]
+      },
+      "max_amount": {
+       "value": 5000,
+       "currency": "GBP"
+      },
+      "actions": [
+       "read",
+       "pay"
+      ],
+      "not_before": "2026-10-12T11:30:00Z",
+      "delegation": {
+       "parent": {
+        "mandate": {
+         "version": "mandatekit/v0.2",
+         "spec": "AP2-draft-2026Q2",
+         "mandate_id": "root-window",
+         "subject": {
+          "agent_id": "agent-tidy",
+          "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc="
+         },
+         "issued_at": "2026-10-11T12:00:00Z",
+         "expires_at": "2026-10-19T12:00:00Z",
+         "constraints": {
+          "intent": "pay the energy bill",
+          "categories": [
+           "bank",
+           "4900"
+          ],
+          "counterparties": {
+           "harbourline": [
+            "read",
+            "submit",
+            "transfer"
+           ],
+           "MID-10231": [
+            "read",
+            "draft",
+            "pay"
+           ]
+          },
+          "max_amount": {
+           "value": 15000,
+           "currency": "GBP"
+          },
+          "actions": [
+           "read",
+           "draft",
+           "submit",
+           "pay",
+           "transfer"
+          ],
+          "approval": {
+           "actions": [
+            "submit"
+           ]
+          },
+          "not_before": "2026-10-12T11:00:00Z",
+          "delegation": {
+           "max_depth": 1
+          }
+         }
+        },
+        "signature": {
+         "alg": "Ed25519",
+         "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+         "value": "W3fqKL6zWVp6qEgdp1hUgho9ST3JgVpN8NnQl4ajRX1wQKsEjngkuNz/nC0wTjSCaU1+lT6ttzH4SgMwcZMGDQ=="
+        }
+       }
+      }
+     }
+    },
+    "signature": {
+     "alg": "Ed25519",
+     "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc=",
+     "value": "VrDZ0mbtCc5SDHEK49Mt8H/TPJVaIA6wi5/l1bzB4WLO92bo1KQUHHm00+axc7g8OngUr/KuFZYaF2ukApJjDA=="
+    }
+   },
+   "trusted": [
+    "issuer"
+   ],
+   "store": false,
+   "revocation_lists": [],
+   "steps": [
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "MID-10231",
+      "category": "4900",
+      "amount": {
+       "value": 4000,
+       "currency": "GBP"
+      },
+      "action": "pay"
+     },
+     "expect": {
+      "decision": "allow",
+      "failed": []
+     }
+    },
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "MID-10231",
+      "category": "4900",
+      "amount": {
+       "value": 4000,
+       "currency": "GBP"
+      },
+      "action": "pay"
+     },
+     "expect": {
+      "decision": "deny",
+      "failed": [
+       "not_before"
+      ]
+     },
+     "now": "2026-10-12T11:15:00Z",
+     "note": "the child's own window start"
+    }
+   ]
+  },
+  {
+   "name": "delegation: a child signed by a key other than the parent's subject key",
+   "signer": "stranger",
+   "mandate": {
+    "mandate": {
+     "version": "mandatekit/v0.2",
+     "spec": "AP2-draft-2026Q2",
+     "mandate_id": "child-stranger",
+     "subject": {
+      "agent_id": "sub-agent"
+     },
+     "issued_at": "2026-10-11T12:00:00Z",
+     "expires_at": "2026-10-13T12:00:00Z",
+     "constraints": {
+      "intent": "pay the energy bill",
+      "categories": [
+       "bank",
+       "4900"
+      ],
+      "counterparties": {
+       "MID-10231": [
+        "read",
+        "pay"
+       ]
+      },
+      "max_amount": {
+       "value": 5000,
+       "currency": "GBP"
+      },
+      "actions": [
+       "read",
+       "pay"
+      ],
+      "delegation": {
+       "parent": {
+        "mandate": {
+         "version": "mandatekit/v0.2",
+         "spec": "AP2-draft-2026Q2",
+         "mandate_id": "root-1",
+         "subject": {
+          "agent_id": "agent-tidy",
+          "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc="
+         },
+         "issued_at": "2026-10-11T12:00:00Z",
+         "expires_at": "2026-10-19T12:00:00Z",
+         "constraints": {
+          "intent": "pay the energy bill",
+          "categories": [
+           "bank",
+           "4900"
+          ],
+          "counterparties": {
+           "harbourline": [
+            "read",
+            "submit",
+            "transfer"
+           ],
+           "MID-10231": [
+            "read",
+            "draft",
+            "pay"
+           ]
+          },
+          "max_amount": {
+           "value": 15000,
+           "currency": "GBP"
+          },
+          "actions": [
+           "read",
+           "draft",
+           "submit",
+           "pay",
+           "transfer"
+          ],
+          "approval": {
+           "actions": [
+            "submit"
+           ]
+          },
+          "delegation": {
+           "max_depth": 1
+          }
+         }
+        },
+        "signature": {
+         "alg": "Ed25519",
+         "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+         "value": "BWqk9VuvWui3nPuK5m09sijBW0fTmkRWI9Hbkebg2N2X2Fq9cLrMB9QMzjEqpCn7OdA+/LbDs1S1SUJtkjB/CA=="
+        }
+       }
+      }
+     }
+    },
+    "signature": {
+     "alg": "Ed25519",
+     "public_key": "a/LUxZOREoNb/fwttS8rnbc1+rVPYnP+QUm2UFvXaUY=",
+     "value": "MDMSRBxmMtyKaJYMXd858BbFJuaJX7IvmzFB/Il5AT+RX15UxP2rROAzhoCmDo3pca3eO7EKNtTMOtVyt8CKDQ=="
+    }
+   },
+   "trusted": [
+    "issuer"
+   ],
+   "store": false,
+   "revocation_lists": [],
+   "steps": [
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "MID-10231",
+      "category": "4900",
+      "amount": {
+       "value": 4000,
+       "currency": "GBP"
+      },
+      "action": "pay"
+     },
+     "expect": {
+      "decision": "deny",
+      "failed": [
+       "delegation",
+       "issuer_trusted"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "delegation: the child signed by the issuer itself is not the delegate either",
+   "signer": "issuer",
+   "mandate": {
+    "mandate": {
+     "version": "mandatekit/v0.2",
+     "spec": "AP2-draft-2026Q2",
+     "mandate_id": "child-issuer",
+     "subject": {
+      "agent_id": "sub-agent"
+     },
+     "issued_at": "2026-10-11T12:00:00Z",
+     "expires_at": "2026-10-13T12:00:00Z",
+     "constraints": {
+      "intent": "pay the energy bill",
+      "categories": [
+       "bank",
+       "4900"
+      ],
+      "counterparties": {
+       "MID-10231": [
+        "read",
+        "pay"
+       ]
+      },
+      "max_amount": {
+       "value": 5000,
+       "currency": "GBP"
+      },
+      "actions": [
+       "read",
+       "pay"
+      ],
+      "delegation": {
+       "parent": {
+        "mandate": {
+         "version": "mandatekit/v0.2",
+         "spec": "AP2-draft-2026Q2",
+         "mandate_id": "root-1",
+         "subject": {
+          "agent_id": "agent-tidy",
+          "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc="
+         },
+         "issued_at": "2026-10-11T12:00:00Z",
+         "expires_at": "2026-10-19T12:00:00Z",
+         "constraints": {
+          "intent": "pay the energy bill",
+          "categories": [
+           "bank",
+           "4900"
+          ],
+          "counterparties": {
+           "harbourline": [
+            "read",
+            "submit",
+            "transfer"
+           ],
+           "MID-10231": [
+            "read",
+            "draft",
+            "pay"
+           ]
+          },
+          "max_amount": {
+           "value": 15000,
+           "currency": "GBP"
+          },
+          "actions": [
+           "read",
+           "draft",
+           "submit",
+           "pay",
+           "transfer"
+          ],
+          "approval": {
+           "actions": [
+            "submit"
+           ]
+          },
+          "delegation": {
+           "max_depth": 1
+          }
+         }
+        },
+        "signature": {
+         "alg": "Ed25519",
+         "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+         "value": "BWqk9VuvWui3nPuK5m09sijBW0fTmkRWI9Hbkebg2N2X2Fq9cLrMB9QMzjEqpCn7OdA+/LbDs1S1SUJtkjB/CA=="
+        }
+       }
+      }
+     }
+    },
+    "signature": {
+     "alg": "Ed25519",
+     "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+     "value": "xuu1oFuZAWSCcrbK+m2bd6PcMn0+g6CYlYmyQHi6aNC8Or5X/fKAG5Nnj2T19RO1RtN0A4RzuSzR37yCpEXAAw=="
+    }
+   },
+   "trusted": [
+    "issuer"
+   ],
+   "store": false,
+   "revocation_lists": [],
+   "steps": [
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "MID-10231",
+      "category": "4900",
+      "amount": {
+       "value": 4000,
+       "currency": "GBP"
+      },
+      "action": "pay"
+     },
+     "expect": {
+      "decision": "deny",
+      "failed": [
+       "delegation",
+       "issuer_trusted"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "delegation: a parent that never opted in",
+   "signer": "delegate",
+   "mandate": {
+    "mandate": {
+     "version": "mandatekit/v0.2",
+     "spec": "AP2-draft-2026Q2",
+     "mandate_id": "child-nodeleg",
+     "subject": {
+      "agent_id": "sub-agent"
+     },
+     "issued_at": "2026-10-11T12:00:00Z",
+     "expires_at": "2026-10-13T12:00:00Z",
+     "constraints": {
+      "intent": "pay the energy bill",
+      "categories": [
+       "bank",
+       "4900"
+      ],
+      "counterparties": {
+       "MID-10231": [
+        "read",
+        "pay"
+       ]
+      },
+      "max_amount": {
+       "value": 5000,
+       "currency": "GBP"
+      },
+      "actions": [
+       "read",
+       "pay"
+      ],
+      "delegation": {
+       "parent": {
+        "mandate": {
+         "version": "mandatekit/v0.2",
+         "spec": "AP2-draft-2026Q2",
+         "mandate_id": "root-nodeleg",
+         "subject": {
+          "agent_id": "agent-tidy",
+          "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc="
+         },
+         "issued_at": "2026-10-11T12:00:00Z",
+         "expires_at": "2026-10-19T12:00:00Z",
+         "constraints": {
+          "intent": "pay the energy bill",
+          "categories": [
+           "bank",
+           "4900"
+          ],
+          "counterparties": {
+           "harbourline": [
+            "read",
+            "submit",
+            "transfer"
+           ],
+           "MID-10231": [
+            "read",
+            "draft",
+            "pay"
+           ]
+          },
+          "max_amount": {
+           "value": 15000,
+           "currency": "GBP"
+          },
+          "actions": [
+           "read",
+           "draft",
+           "submit",
+           "pay",
+           "transfer"
+          ],
+          "approval": {
+           "actions": [
+            "submit"
+           ]
+          }
+         }
+        },
+        "signature": {
+         "alg": "Ed25519",
+         "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+         "value": "FZhxmrY6SoD8jEI2290WluOS6/XDmZXgzZhGgmpm5eni21693BV4989kKseVqEPgPcWTu2OVh0V8hz0Ee7zoAw=="
+        }
+       }
+      }
+     }
+    },
+    "signature": {
+     "alg": "Ed25519",
+     "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc=",
+     "value": "nwxd3mmjmDPEfbJ5U2okMg/CHG3fS9/4i6r4eujmbOelAN/M+2iAgFwtWPMRYoYZ4jhr+d0sgeG6gjkE3U+fBA=="
+    }
+   },
+   "trusted": [
+    "issuer"
+   ],
+   "store": false,
+   "revocation_lists": [],
+   "steps": [
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "MID-10231",
+      "category": "4900",
+      "amount": {
+       "value": 4000,
+       "currency": "GBP"
+      },
+      "action": "pay"
+     },
+     "expect": {
+      "decision": "deny",
+      "failed": [
+       "delegation",
+       "issuer_trusted"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "delegation: a parent with no subject key cannot have delegates",
+   "signer": "delegate",
+   "mandate": {
+    "mandate": {
+     "version": "mandatekit/v0.2",
+     "spec": "AP2-draft-2026Q2",
+     "mandate_id": "child-nokey",
+     "subject": {
+      "agent_id": "sub-agent"
+     },
+     "issued_at": "2026-10-11T12:00:00Z",
+     "expires_at": "2026-10-13T12:00:00Z",
+     "constraints": {
+      "intent": "pay the energy bill",
+      "categories": [
+       "bank",
+       "4900"
+      ],
+      "counterparties": {
+       "MID-10231": [
+        "read",
+        "pay"
+       ]
+      },
+      "max_amount": {
+       "value": 5000,
+       "currency": "GBP"
+      },
+      "actions": [
+       "read",
+       "pay"
+      ],
+      "delegation": {
+       "parent": {
+        "mandate": {
+         "version": "mandatekit/v0.2",
+         "spec": "AP2-draft-2026Q2",
+         "mandate_id": "root-nokey",
+         "subject": {
+          "agent_id": "agent-tidy"
+         },
+         "issued_at": "2026-10-11T12:00:00Z",
+         "expires_at": "2026-10-19T12:00:00Z",
+         "constraints": {
+          "intent": "pay the energy bill",
+          "categories": [
+           "bank",
+           "4900"
+          ],
+          "counterparties": {
+           "harbourline": [
+            "read",
+            "submit",
+            "transfer"
+           ],
+           "MID-10231": [
+            "read",
+            "draft",
+            "pay"
+           ]
+          },
+          "max_amount": {
+           "value": 15000,
+           "currency": "GBP"
+          },
+          "actions": [
+           "read",
+           "draft",
+           "submit",
+           "pay",
+           "transfer"
+          ],
+          "approval": {
+           "actions": [
+            "submit"
+           ]
+          },
+          "delegation": {
+           "max_depth": 1
+          }
+         }
+        },
+        "signature": {
+         "alg": "Ed25519",
+         "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+         "value": "/yw/fe8P7dZUEgQ6drz0W2y8ouUVqjLwjX0hwpudGGKYRP8Ax8nmw1pLcclTNRzQsBQCA9sFVOit1oeMn+IvBg=="
+        }
+       }
+      }
+     }
+    },
+    "signature": {
+     "alg": "Ed25519",
+     "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc=",
+     "value": "CRlrlssKUT/e1fCNNphGsRD/9lpfsfmcGBcbdM2d/LKE8RJjWuCtuySMTZaCpaiwUwTFT5UIGVWKfCXuW4DqBA=="
+    }
+   },
+   "trusted": [
+    "issuer"
+   ],
+   "store": false,
+   "revocation_lists": [],
+   "steps": [
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "MID-10231",
+      "category": "4900",
+      "amount": {
+       "value": 4000,
+       "currency": "GBP"
+      },
+      "action": "pay"
+     },
+     "expect": {
+      "decision": "deny",
+      "failed": [
+       "delegation",
+       "issuer_trusted"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "delegation: a grandchild under a child that may not delegate",
+   "signer": "grandchild",
+   "mandate": {
+    "mandate": {
+     "version": "mandatekit/v0.2",
+     "spec": "AP2-draft-2026Q2",
+     "mandate_id": "grand-under-1",
+     "subject": {
+      "agent_id": "grand"
+     },
+     "issued_at": "2026-10-12T19:27:38Z",
+     "expires_at": "2026-10-13T12:00:00Z",
+     "constraints": {
+      "intent": "pay the energy bill",
+      "categories": [
+       "bank",
+       "4900"
+      ],
+      "counterparties": {
+       "MID-10231": [
+        "read",
+        "pay"
+       ]
+      },
+      "max_amount": {
+       "value": 5000,
+       "currency": "GBP"
+      },
+      "actions": [
+       "read",
+       "pay"
+      ],
+      "delegation": {
+       "parent": {
+        "mandate": {
+         "version": "mandatekit/v0.2",
+         "spec": "AP2-draft-2026Q2",
+         "mandate_id": "child-1",
+         "subject": {
+          "agent_id": "sub-agent"
+         },
+         "issued_at": "2026-10-11T12:00:00Z",
+         "expires_at": "2026-10-13T12:00:00Z",
+         "constraints": {
+          "intent": "pay the energy bill",
+          "categories": [
+           "bank",
+           "4900"
+          ],
+          "counterparties": {
+           "MID-10231": [
+            "read",
+            "pay"
+           ]
+          },
+          "max_amount": {
+           "value": 5000,
+           "currency": "GBP"
+          },
+          "actions": [
+           "read",
+           "pay"
+          ],
+          "delegation": {
+           "parent": {
+            "mandate": {
+             "version": "mandatekit/v0.2",
+             "spec": "AP2-draft-2026Q2",
+             "mandate_id": "root-1",
+             "subject": {
+              "agent_id": "agent-tidy",
+              "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc="
+             },
+             "issued_at": "2026-10-11T12:00:00Z",
+             "expires_at": "2026-10-19T12:00:00Z",
+             "constraints": {
+              "intent": "pay the energy bill",
+              "categories": [
+               "bank",
+               "4900"
+              ],
+              "counterparties": {
+               "harbourline": [
+                "read",
+                "submit",
+                "transfer"
+               ],
+               "MID-10231": [
+                "read",
+                "draft",
+                "pay"
+               ]
+              },
+              "max_amount": {
+               "value": 15000,
+               "currency": "GBP"
+              },
+              "actions": [
+               "read",
+               "draft",
+               "submit",
+               "pay",
+               "transfer"
+              ],
+              "approval": {
+               "actions": [
+                "submit"
+               ]
+              },
+              "delegation": {
+               "max_depth": 1
+              }
+             }
+            },
+            "signature": {
+             "alg": "Ed25519",
+             "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+             "value": "BWqk9VuvWui3nPuK5m09sijBW0fTmkRWI9Hbkebg2N2X2Fq9cLrMB9QMzjEqpCn7OdA+/LbDs1S1SUJtkjB/CA=="
+            }
+           }
+          }
+         }
+        },
+        "signature": {
+         "alg": "Ed25519",
+         "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc=",
+         "value": "Fg1F481RCFk3wB0bBQEwNH8ofQK8/fuZTV3mBE20QaC1Iv4G81Fam778mm4mgo1D8Bqs6nu97chV7KlZjomxAg=="
+        }
+       }
+      }
+     }
+    },
+    "signature": {
+     "alg": "Ed25519",
+     "public_key": "JUO5L/EJVRFHatyDadtt3JM2ZaEZeN2hQE7hBmypVZ0=",
+     "value": "O7vqaUdpkAFPDJEMM6OKHg19o++xMmb0fRbhAtyw6DxzuedGYDDFNA5K8fE5KwBY/cz9Vr5a0gZgQkb2yarADQ=="
+    }
+   },
+   "trusted": [
+    "issuer"
+   ],
+   "store": false,
+   "revocation_lists": [],
+   "steps": [
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "MID-10231",
+      "category": "4900",
+      "amount": {
+       "value": 4000,
+       "currency": "GBP"
+      },
+      "action": "pay"
+     },
+     "expect": {
+      "decision": "deny",
+      "failed": [
+       "delegation",
+       "issuer_trusted"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "delegation: a garbage parent envelope",
+   "signer": "delegate",
+   "mandate": {
+    "mandate": {
+     "version": "mandatekit/v0.2",
+     "spec": "AP2-draft-2026Q2",
+     "mandate_id": "child-garbage",
+     "subject": {
+      "agent_id": "agent-tidy",
+      "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc="
+     },
+     "issued_at": "2026-10-11T12:00:00Z",
+     "expires_at": "2026-10-19T12:00:00Z",
+     "constraints": {
+      "intent": "pay the energy bill",
+      "categories": [
+       "bank",
+       "4900"
+      ],
+      "counterparties": {
+       "harbourline": [
+        "read",
+        "submit",
+        "transfer"
+       ],
+       "MID-10231": [
+        "read",
+        "draft",
+        "pay"
+       ]
+      },
+      "max_amount": {
+       "value": 15000,
+       "currency": "GBP"
+      },
+      "actions": [
+       "read",
+       "draft",
+       "submit",
+       "pay",
+       "transfer"
+      ],
+      "approval": {
+       "actions": [
+        "submit"
+       ]
+      },
+      "delegation": {
+       "parent": {
+        "mandate": "nope"
+       }
+      }
+     }
+    },
+    "signature": {
+     "alg": "Ed25519",
+     "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc=",
+     "value": "PI6Dci/1EMyCYrTA9Hk3QbBJN594dQ6dw+Qe954BySBcl5VVCLTf8P5gHv3YSLCdNnupmKvpa/tfB6NCBb0rBQ=="
+    }
+   },
+   "trusted": [
+    "issuer"
+   ],
+   "store": false,
+   "revocation_lists": [],
+   "steps": [
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "MID-10231",
+      "category": "4900",
+      "amount": {
+       "value": 11840,
+       "currency": "GBP"
+      },
+      "action": "pay"
+     },
+     "expect": {
+      "decision": "deny",
+      "failed": [
+       "delegation",
+       "issuer_trusted"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "delegation: an unknown key inside the child's delegation object",
+   "signer": "delegate",
+   "mandate": {
+    "mandate": {
+     "version": "mandatekit/v0.2",
+     "spec": "AP2-draft-2026Q2",
+     "mandate_id": "child-extra",
+     "subject": {
+      "agent_id": "sub-agent"
+     },
+     "issued_at": "2026-10-12T19:27:38Z",
+     "expires_at": "2026-10-19T12:00:00Z",
+     "constraints": {
+      "intent": "pay the energy bill",
+      "categories": [
+       "bank",
+       "4900"
+      ],
+      "counterparties": {
+       "harbourline": [
+        "read",
+        "submit",
+        "transfer"
+       ],
+       "MID-10231": [
+        "read",
+        "draft",
+        "pay"
+       ]
+      },
+      "max_amount": {
+       "value": 15000,
+       "currency": "GBP"
+      },
+      "actions": [
+       "read",
+       "draft",
+       "submit",
+       "pay",
+       "transfer"
+      ],
+      "approval": {
+       "actions": [
+        "submit"
+       ]
+      },
+      "delegation": {
+       "parent": {
+        "mandate": {
+         "version": "mandatekit/v0.2",
+         "spec": "AP2-draft-2026Q2",
+         "mandate_id": "root-1",
+         "subject": {
+          "agent_id": "agent-tidy",
+          "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc="
+         },
+         "issued_at": "2026-10-11T12:00:00Z",
+         "expires_at": "2026-10-19T12:00:00Z",
+         "constraints": {
+          "intent": "pay the energy bill",
+          "categories": [
+           "bank",
+           "4900"
+          ],
+          "counterparties": {
+           "harbourline": [
+            "read",
+            "submit",
+            "transfer"
+           ],
+           "MID-10231": [
+            "read",
+            "draft",
+            "pay"
+           ]
+          },
+          "max_amount": {
+           "value": 15000,
+           "currency": "GBP"
+          },
+          "actions": [
+           "read",
+           "draft",
+           "submit",
+           "pay",
+           "transfer"
+          ],
+          "approval": {
+           "actions": [
+            "submit"
+           ]
+          },
+          "delegation": {
+           "max_depth": 1
+          }
+         }
+        },
+        "signature": {
+         "alg": "Ed25519",
+         "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+         "value": "BWqk9VuvWui3nPuK5m09sijBW0fTmkRWI9Hbkebg2N2X2Fq9cLrMB9QMzjEqpCn7OdA+/LbDs1S1SUJtkjB/CA=="
+        }
+       },
+       "extra": true
+      }
+     }
+    },
+    "signature": {
+     "alg": "Ed25519",
+     "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc=",
+     "value": "YtX4Hc+S1xJsEEK4UJe963Dp2u8xhOXpnjSSY/ZB6oGgjEW0SuSbvskZjssfMn4l4uFXVQqpzYfpcOof37PaBw=="
+    }
+   },
+   "trusted": [
+    "issuer"
+   ],
+   "store": false,
+   "revocation_lists": [],
+   "steps": [
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "harbourline",
+      "category": "bank",
+      "amount": {
+       "value": 0,
+       "currency": "GBP"
+      },
+      "action": "read"
+     },
+     "expect": {
+      "decision": "deny",
+      "failed": [
+       "delegation",
+       "issuer_trusted"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "delegation: a malformed delegation object on a root",
+   "signer": "issuer",
+   "mandate": {
+    "mandate": {
+     "version": "mandatekit/v0.2",
+     "spec": "AP2-draft-2026Q2",
+     "mandate_id": "root-bad-deleg",
+     "subject": {
+      "agent_id": "agent-tidy",
+      "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc="
+     },
+     "issued_at": "2026-10-11T12:00:00Z",
+     "expires_at": "2026-10-19T12:00:00Z",
+     "constraints": {
+      "intent": "pay the energy bill",
+      "categories": [
+       "bank",
+       "4900"
+      ],
+      "counterparties": {
+       "harbourline": [
+        "read",
+        "submit",
+        "transfer"
+       ],
+       "MID-10231": [
+        "read",
+        "draft",
+        "pay"
+       ]
+      },
+      "max_amount": {
+       "value": 15000,
+       "currency": "GBP"
+      },
+      "actions": [
+       "read",
+       "draft",
+       "submit",
+       "pay",
+       "transfer"
+      ],
+      "approval": {
+       "actions": [
+        "submit"
+       ]
+      },
+      "delegation": {
+       "max_depth": -1
+      }
+     }
+    },
+    "signature": {
+     "alg": "Ed25519",
+     "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+     "value": "H0l/POFrSlEyOnejk3VkTtAoPzodLATzJD7i1eZXCR+AcNM8wY6XTK35QjIhio8WAeJS3iYDpxnHXYzobEPJBQ=="
+    }
+   },
+   "trusted": [
+    "issuer"
+   ],
+   "store": false,
+   "revocation_lists": [],
+   "steps": [
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "MID-10231",
+      "category": "4900",
+      "amount": {
+       "value": 11840,
+       "currency": "GBP"
+      },
+      "action": "pay"
+     },
+     "expect": {
+      "decision": "deny",
+      "failed": [
+       "delegation"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "delegation: a child edited after signing fails its signature",
+   "signer": null,
+   "mandate": {
+    "mandate": {
+     "version": "mandatekit/v0.2",
+     "spec": "AP2-draft-2026Q2",
+     "mandate_id": "child-1",
+     "subject": {
+      "agent_id": "sub-agent"
+     },
+     "issued_at": "2026-10-11T12:00:00Z",
+     "expires_at": "2026-10-13T12:00:00Z",
+     "constraints": {
+      "intent": "pay the energy bill",
+      "categories": [
+       "bank",
+       "4900"
+      ],
+      "counterparties": {
+       "MID-10231": [
+        "read",
+        "pay"
+       ]
+      },
+      "max_amount": {
+       "value": 999999,
+       "currency": "GBP"
+      },
+      "actions": [
+       "read",
+       "pay"
+      ],
+      "delegation": {
+       "parent": {
+        "mandate": {
+         "version": "mandatekit/v0.2",
+         "spec": "AP2-draft-2026Q2",
+         "mandate_id": "root-1",
+         "subject": {
+          "agent_id": "agent-tidy",
+          "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc="
+         },
+         "issued_at": "2026-10-11T12:00:00Z",
+         "expires_at": "2026-10-19T12:00:00Z",
+         "constraints": {
+          "intent": "pay the energy bill",
+          "categories": [
+           "bank",
+           "4900"
+          ],
+          "counterparties": {
+           "harbourline": [
+            "read",
+            "submit",
+            "transfer"
+           ],
+           "MID-10231": [
+            "read",
+            "draft",
+            "pay"
+           ]
+          },
+          "max_amount": {
+           "value": 15000,
+           "currency": "GBP"
+          },
+          "actions": [
+           "read",
+           "draft",
+           "submit",
+           "pay",
+           "transfer"
+          ],
+          "approval": {
+           "actions": [
+            "submit"
+           ]
+          },
+          "delegation": {
+           "max_depth": 1
+          }
+         }
+        },
+        "signature": {
+         "alg": "Ed25519",
+         "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+         "value": "BWqk9VuvWui3nPuK5m09sijBW0fTmkRWI9Hbkebg2N2X2Fq9cLrMB9QMzjEqpCn7OdA+/LbDs1S1SUJtkjB/CA=="
+        }
+       }
+      }
+     }
+    },
+    "signature": {
+     "alg": "Ed25519",
+     "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc=",
+     "value": "Fg1F481RCFk3wB0bBQEwNH8ofQK8/fuZTV3mBE20QaC1Iv4G81Fam778mm4mgo1D8Bqs6nu97chV7KlZjomxAg=="
+    }
+   },
+   "trusted": [
+    "issuer"
+   ],
+   "store": false,
+   "revocation_lists": [],
+   "steps": [
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "MID-10231",
+      "category": "4900",
+      "amount": {
+       "value": 4000,
+       "currency": "GBP"
+      },
+      "action": "pay"
+     },
+     "expect": {
+      "decision": "deny",
+      "failed": [
+       "delegation",
+       "issuer_trusted"
+      ],
+      "signature_valid": false
+     }
+    }
+   ]
+  },
+  {
+   "name": "delegation: the embedded parent edited after signing breaks the child's signature too",
+   "signer": null,
+   "mandate": {
+    "mandate": {
+     "version": "mandatekit/v0.2",
+     "spec": "AP2-draft-2026Q2",
+     "mandate_id": "child-1",
+     "subject": {
+      "agent_id": "sub-agent"
+     },
+     "issued_at": "2026-10-11T12:00:00Z",
+     "expires_at": "2026-10-13T12:00:00Z",
+     "constraints": {
+      "intent": "pay the energy bill",
+      "categories": [
+       "bank",
+       "4900"
+      ],
+      "counterparties": {
+       "MID-10231": [
+        "read",
+        "pay"
+       ]
+      },
+      "max_amount": {
+       "value": 5000,
+       "currency": "GBP"
+      },
+      "actions": [
+       "read",
+       "pay"
+      ],
+      "delegation": {
+       "parent": {
+        "mandate": {
+         "version": "mandatekit/v0.2",
+         "spec": "AP2-draft-2026Q2",
+         "mandate_id": "root-1",
+         "subject": {
+          "agent_id": "agent-tidy",
+          "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc="
+         },
+         "issued_at": "2026-10-11T12:00:00Z",
+         "expires_at": "2026-10-19T12:00:00Z",
+         "constraints": {
+          "intent": "pay the energy bill",
+          "categories": [
+           "bank",
+           "4900"
+          ],
+          "counterparties": {
+           "harbourline": [
+            "read",
+            "submit",
+            "transfer"
+           ],
+           "MID-10231": [
+            "read",
+            "draft",
+            "pay"
+           ]
+          },
+          "max_amount": {
+           "value": 999999,
+           "currency": "GBP"
+          },
+          "actions": [
+           "read",
+           "draft",
+           "submit",
+           "pay",
+           "transfer"
+          ],
+          "approval": {
+           "actions": [
+            "submit"
+           ]
+          },
+          "delegation": {
+           "max_depth": 1
+          }
+         }
+        },
+        "signature": {
+         "alg": "Ed25519",
+         "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+         "value": "BWqk9VuvWui3nPuK5m09sijBW0fTmkRWI9Hbkebg2N2X2Fq9cLrMB9QMzjEqpCn7OdA+/LbDs1S1SUJtkjB/CA=="
+        }
+       }
+      }
+     }
+    },
+    "signature": {
+     "alg": "Ed25519",
+     "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc=",
+     "value": "Fg1F481RCFk3wB0bBQEwNH8ofQK8/fuZTV3mBE20QaC1Iv4G81Fam778mm4mgo1D8Bqs6nu97chV7KlZjomxAg=="
+    }
+   },
+   "trusted": [
+    "issuer"
+   ],
+   "store": false,
+   "revocation_lists": [],
+   "steps": [
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "MID-10231",
+      "category": "4900",
+      "amount": {
+       "value": 4000,
+       "currency": "GBP"
+      },
+      "action": "pay"
+     },
+     "expect": {
+      "decision": "deny",
+      "failed": [
+       "delegation",
+       "issuer_trusted"
+      ],
+      "signature_valid": false
+     }
+    }
+   ]
+  },
+  {
+   "name": "delegation: a revoked parent takes its children with it",
+   "signer": "delegate",
+   "mandate": {
+    "mandate": {
+     "version": "mandatekit/v0.2",
+     "spec": "AP2-draft-2026Q2",
+     "mandate_id": "child-of-rev",
+     "subject": {
+      "agent_id": "sub-agent"
+     },
+     "issued_at": "2026-10-11T12:00:00Z",
+     "expires_at": "2026-10-13T12:00:00Z",
+     "constraints": {
+      "intent": "pay the energy bill",
+      "categories": [
+       "bank",
+       "4900"
+      ],
+      "counterparties": {
+       "MID-10231": [
+        "read",
+        "pay"
+       ]
+      },
+      "max_amount": {
+       "value": 5000,
+       "currency": "GBP"
+      },
+      "actions": [
+       "read",
+       "pay"
+      ],
+      "delegation": {
+       "parent": {
+        "mandate": {
+         "version": "mandatekit/v0.2",
+         "spec": "AP2-draft-2026Q2",
+         "mandate_id": "root-rev",
+         "subject": {
+          "agent_id": "agent-tidy",
+          "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc="
+         },
+         "issued_at": "2026-10-11T12:00:00Z",
+         "expires_at": "2026-10-19T12:00:00Z",
+         "constraints": {
+          "intent": "pay the energy bill",
+          "categories": [
+           "bank",
+           "4900"
+          ],
+          "counterparties": {
+           "harbourline": [
+            "read",
+            "submit",
+            "transfer"
+           ],
+           "MID-10231": [
+            "read",
+            "draft",
+            "pay"
+           ]
+          },
+          "max_amount": {
+           "value": 15000,
+           "currency": "GBP"
+          },
+          "actions": [
+           "read",
+           "draft",
+           "submit",
+           "pay",
+           "transfer"
+          ],
+          "approval": {
+           "actions": [
+            "submit"
+           ]
+          },
+          "revocation": {
+           "list_id": "rl-root"
+          },
+          "delegation": {
+           "max_depth": 1
+          }
+         }
+        },
+        "signature": {
+         "alg": "Ed25519",
+         "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+         "value": "SbEZl4yYsqSchGgvrmSNQyNzYYzxaw0yMR72KUfQ+vIHcFPRCNcm176ooD5s2ftg9bcQWOvRN0vjCgJ8H3V9Aw=="
+        }
+       }
+      }
+     }
+    },
+    "signature": {
+     "alg": "Ed25519",
+     "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc=",
+     "value": "sMBoMBwZm2X5WOQU6HhmepYqET7cz8nYkSX10TPbc0PlEIIPOxEfmNfk75/rrBoQqqnz2iClOTn1rwtcIkN5BQ=="
+    }
+   },
+   "trusted": [
+    "issuer"
+   ],
+   "store": false,
+   "revocation_lists": [
+    {
+     "signer": "issuer",
+     "envelope": {
+      "list": {
+       "version": "mandatekit/revocation-list/v0.2",
+       "list_id": "rl-root",
+       "issued_at": "2026-10-12T11:55:00Z",
+       "revoked": [
+        "root-rev"
+       ]
+      },
+      "signature": {
+       "alg": "Ed25519",
+       "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+       "value": "0qlVpc2ykgwMfqH+q9Cy0d2BTvOHQk9Ihm5Gme0nncjmZ6YvmHmedSOqAmkqCdT03tGzYPihVI9cPz1wbIONAg=="
+      }
+     }
+    }
+   ],
+   "steps": [
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "MID-10231",
+      "category": "4900",
+      "amount": {
+       "value": 4000,
+       "currency": "GBP"
+      },
+      "action": "pay"
+     },
+     "expect": {
+      "decision": "deny",
+      "failed": [
+       "revoked"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "delegation: the parent's clean list, and no list at all",
+   "signer": "delegate",
+   "mandate": {
+    "mandate": {
+     "version": "mandatekit/v0.2",
+     "spec": "AP2-draft-2026Q2",
+     "mandate_id": "child-of-rev",
+     "subject": {
+      "agent_id": "sub-agent"
+     },
+     "issued_at": "2026-10-11T12:00:00Z",
+     "expires_at": "2026-10-13T12:00:00Z",
+     "constraints": {
+      "intent": "pay the energy bill",
+      "categories": [
+       "bank",
+       "4900"
+      ],
+      "counterparties": {
+       "MID-10231": [
+        "read",
+        "pay"
+       ]
+      },
+      "max_amount": {
+       "value": 5000,
+       "currency": "GBP"
+      },
+      "actions": [
+       "read",
+       "pay"
+      ],
+      "delegation": {
+       "parent": {
+        "mandate": {
+         "version": "mandatekit/v0.2",
+         "spec": "AP2-draft-2026Q2",
+         "mandate_id": "root-rev",
+         "subject": {
+          "agent_id": "agent-tidy",
+          "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc="
+         },
+         "issued_at": "2026-10-11T12:00:00Z",
+         "expires_at": "2026-10-19T12:00:00Z",
+         "constraints": {
+          "intent": "pay the energy bill",
+          "categories": [
+           "bank",
+           "4900"
+          ],
+          "counterparties": {
+           "harbourline": [
+            "read",
+            "submit",
+            "transfer"
+           ],
+           "MID-10231": [
+            "read",
+            "draft",
+            "pay"
+           ]
+          },
+          "max_amount": {
+           "value": 15000,
+           "currency": "GBP"
+          },
+          "actions": [
+           "read",
+           "draft",
+           "submit",
+           "pay",
+           "transfer"
+          ],
+          "approval": {
+           "actions": [
+            "submit"
+           ]
+          },
+          "revocation": {
+           "list_id": "rl-root"
+          },
+          "delegation": {
+           "max_depth": 1
+          }
+         }
+        },
+        "signature": {
+         "alg": "Ed25519",
+         "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+         "value": "SbEZl4yYsqSchGgvrmSNQyNzYYzxaw0yMR72KUfQ+vIHcFPRCNcm176ooD5s2ftg9bcQWOvRN0vjCgJ8H3V9Aw=="
+        }
+       }
+      }
+     }
+    },
+    "signature": {
+     "alg": "Ed25519",
+     "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc=",
+     "value": "sMBoMBwZm2X5WOQU6HhmepYqET7cz8nYkSX10TPbc0PlEIIPOxEfmNfk75/rrBoQqqnz2iClOTn1rwtcIkN5BQ=="
+    }
+   },
+   "trusted": [
+    "issuer"
+   ],
+   "store": false,
+   "revocation_lists": [
+    {
+     "signer": "issuer",
+     "envelope": {
+      "list": {
+       "version": "mandatekit/revocation-list/v0.2",
+       "list_id": "rl-root",
+       "issued_at": "2026-10-12T11:55:00Z",
+       "revoked": []
+      },
+      "signature": {
+       "alg": "Ed25519",
+       "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+       "value": "YRQMa74VOtsnDnFWrJ6BqIhUYXqmDFBQzqTtt8fIRyKr6WGLMlkvuZBrwUazr3I2N1OAatRrxnyXUsVe5NfZDA=="
+      }
+     }
+    }
+   ],
+   "steps": [
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "MID-10231",
+      "category": "4900",
+      "amount": {
+       "value": 4000,
+       "currency": "GBP"
+      },
+      "action": "pay"
+     },
+     "expect": {
+      "decision": "allow",
+      "failed": []
+     }
+    }
+   ]
+  },
+  {
+   "name": "delegation: the parent's declared list missing denies the child",
+   "signer": "delegate",
+   "mandate": {
+    "mandate": {
+     "version": "mandatekit/v0.2",
+     "spec": "AP2-draft-2026Q2",
+     "mandate_id": "child-of-rev",
+     "subject": {
+      "agent_id": "sub-agent"
+     },
+     "issued_at": "2026-10-11T12:00:00Z",
+     "expires_at": "2026-10-13T12:00:00Z",
+     "constraints": {
+      "intent": "pay the energy bill",
+      "categories": [
+       "bank",
+       "4900"
+      ],
+      "counterparties": {
+       "MID-10231": [
+        "read",
+        "pay"
+       ]
+      },
+      "max_amount": {
+       "value": 5000,
+       "currency": "GBP"
+      },
+      "actions": [
+       "read",
+       "pay"
+      ],
+      "delegation": {
+       "parent": {
+        "mandate": {
+         "version": "mandatekit/v0.2",
+         "spec": "AP2-draft-2026Q2",
+         "mandate_id": "root-rev",
+         "subject": {
+          "agent_id": "agent-tidy",
+          "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc="
+         },
+         "issued_at": "2026-10-11T12:00:00Z",
+         "expires_at": "2026-10-19T12:00:00Z",
+         "constraints": {
+          "intent": "pay the energy bill",
+          "categories": [
+           "bank",
+           "4900"
+          ],
+          "counterparties": {
+           "harbourline": [
+            "read",
+            "submit",
+            "transfer"
+           ],
+           "MID-10231": [
+            "read",
+            "draft",
+            "pay"
+           ]
+          },
+          "max_amount": {
+           "value": 15000,
+           "currency": "GBP"
+          },
+          "actions": [
+           "read",
+           "draft",
+           "submit",
+           "pay",
+           "transfer"
+          ],
+          "approval": {
+           "actions": [
+            "submit"
+           ]
+          },
+          "revocation": {
+           "list_id": "rl-root"
+          },
+          "delegation": {
+           "max_depth": 1
+          }
+         }
+        },
+        "signature": {
+         "alg": "Ed25519",
+         "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+         "value": "SbEZl4yYsqSchGgvrmSNQyNzYYzxaw0yMR72KUfQ+vIHcFPRCNcm176ooD5s2ftg9bcQWOvRN0vjCgJ8H3V9Aw=="
+        }
+       }
+      }
+     }
+    },
+    "signature": {
+     "alg": "Ed25519",
+     "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc=",
+     "value": "sMBoMBwZm2X5WOQU6HhmepYqET7cz8nYkSX10TPbc0PlEIIPOxEfmNfk75/rrBoQqqnz2iClOTn1rwtcIkN5BQ=="
+    }
+   },
+   "trusted": [
+    "issuer"
+   ],
+   "store": false,
+   "revocation_lists": [],
+   "steps": [
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "MID-10231",
+      "category": "4900",
+      "amount": {
+       "value": 4000,
+       "currency": "GBP"
+      },
+      "action": "pay"
+     },
+     "expect": {
+      "decision": "deny",
+      "failed": [
+       "revocation_list"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "delegation: a parent's max_uses counts the children's uses",
+   "signer": "delegate",
+   "mandate": {
+    "mandate": {
+     "version": "mandatekit/v0.2",
+     "spec": "AP2-draft-2026Q2",
+     "mandate_id": "child-of-lim",
+     "subject": {
+      "agent_id": "sub-agent"
+     },
+     "issued_at": "2026-10-11T12:00:00Z",
+     "expires_at": "2026-10-13T12:00:00Z",
+     "constraints": {
+      "intent": "pay the energy bill",
+      "categories": [
+       "bank",
+       "4900"
+      ],
+      "counterparties": {
+       "MID-10231": [
+        "read",
+        "pay"
+       ]
+      },
+      "max_amount": {
+       "value": 5000,
+       "currency": "GBP"
+      },
+      "actions": [
+       "read",
+       "pay"
+      ],
+      "delegation": {
+       "parent": {
+        "mandate": {
+         "version": "mandatekit/v0.2",
+         "spec": "AP2-draft-2026Q2",
+         "mandate_id": "root-lim",
+         "subject": {
+          "agent_id": "agent-tidy",
+          "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc="
+         },
+         "issued_at": "2026-10-11T12:00:00Z",
+         "expires_at": "2026-10-19T12:00:00Z",
+         "constraints": {
+          "intent": "pay the energy bill",
+          "categories": [
+           "bank",
+           "4900"
+          ],
+          "counterparties": {
+           "harbourline": [
+            "read",
+            "submit",
+            "transfer"
+           ],
+           "MID-10231": [
+            "read",
+            "draft",
+            "pay"
+           ]
+          },
+          "max_amount": {
+           "value": 15000,
+           "currency": "GBP"
+          },
+          "actions": [
+           "read",
+           "draft",
+           "submit",
+           "pay",
+           "transfer"
+          ],
+          "approval": {
+           "actions": [
+            "submit"
+           ]
+          },
+          "limits": {
+           "actions": [
+            "pay"
+           ],
+           "max_uses": 1
+          },
+          "delegation": {
+           "max_depth": 1
+          }
+         }
+        },
+        "signature": {
+         "alg": "Ed25519",
+         "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+         "value": "sV1BIgTcx/mKPPDU3oejLe+lF37gW+qkrbI+yv7QRPWPVbdNRoelpp+nQhux2EUn1UvgHoQJ03prWyTdc4uzAg=="
+        }
+       }
+      }
+     }
+    },
+    "signature": {
+     "alg": "Ed25519",
+     "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc=",
+     "value": "rvKNq6uyl9lA2oqMfH4YCaVsKzn1aj7da05wQap0Rayr4MOgWZbh4xVpQJ7jTZRg02q2osPj/SAYGT8kOdLeBQ=="
+    }
+   },
+   "trusted": [
+    "issuer"
+   ],
+   "store": true,
+   "revocation_lists": [],
+   "steps": [
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "MID-10231",
+      "category": "4900",
+      "amount": {
+       "value": 4000,
+       "currency": "GBP"
+      },
+      "action": "pay"
+     },
+     "expect": {
+      "decision": "allow",
+      "failed": []
+     }
+    },
+    {
+     "op": "record",
+     "transaction": {
+      "merchant": "MID-10231",
+      "category": "4900",
+      "amount": {
+       "value": 4000,
+       "currency": "GBP"
+      },
+      "action": "pay"
+     }
+    },
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "MID-10231",
+      "category": "4900",
+      "amount": {
+       "value": 4000,
+       "currency": "GBP"
+      },
+      "action": "pay"
+     },
+     "expect": {
+      "decision": "deny",
+      "failed": [
+       "max_uses"
+      ]
+     },
+     "now": "2026-10-12T12:00:05Z",
+     "note": "the root link's limit, the child has none of its own"
+    },
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "MID-10231",
+      "category": "4900",
+      "amount": {
+       "value": 0,
+       "currency": "GBP"
+      },
+      "action": "read"
+     },
+     "expect": {
+      "decision": "allow",
+      "failed": []
+     },
+     "now": "2026-10-12T12:00:05Z"
+    }
+   ]
+  },
+  {
+   "name": "delegation: limits anywhere in the chain need a store",
+   "signer": "delegate",
+   "mandate": {
+    "mandate": {
+     "version": "mandatekit/v0.2",
+     "spec": "AP2-draft-2026Q2",
+     "mandate_id": "child-of-lim",
+     "subject": {
+      "agent_id": "sub-agent"
+     },
+     "issued_at": "2026-10-11T12:00:00Z",
+     "expires_at": "2026-10-13T12:00:00Z",
+     "constraints": {
+      "intent": "pay the energy bill",
+      "categories": [
+       "bank",
+       "4900"
+      ],
+      "counterparties": {
+       "MID-10231": [
+        "read",
+        "pay"
+       ]
+      },
+      "max_amount": {
+       "value": 5000,
+       "currency": "GBP"
+      },
+      "actions": [
+       "read",
+       "pay"
+      ],
+      "delegation": {
+       "parent": {
+        "mandate": {
+         "version": "mandatekit/v0.2",
+         "spec": "AP2-draft-2026Q2",
+         "mandate_id": "root-lim",
+         "subject": {
+          "agent_id": "agent-tidy",
+          "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc="
+         },
+         "issued_at": "2026-10-11T12:00:00Z",
+         "expires_at": "2026-10-19T12:00:00Z",
+         "constraints": {
+          "intent": "pay the energy bill",
+          "categories": [
+           "bank",
+           "4900"
+          ],
+          "counterparties": {
+           "harbourline": [
+            "read",
+            "submit",
+            "transfer"
+           ],
+           "MID-10231": [
+            "read",
+            "draft",
+            "pay"
+           ]
+          },
+          "max_amount": {
+           "value": 15000,
+           "currency": "GBP"
+          },
+          "actions": [
+           "read",
+           "draft",
+           "submit",
+           "pay",
+           "transfer"
+          ],
+          "approval": {
+           "actions": [
+            "submit"
+           ]
+          },
+          "limits": {
+           "actions": [
+            "pay"
+           ],
+           "max_uses": 1
+          },
+          "delegation": {
+           "max_depth": 1
+          }
+         }
+        },
+        "signature": {
+         "alg": "Ed25519",
+         "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+         "value": "sV1BIgTcx/mKPPDU3oejLe+lF37gW+qkrbI+yv7QRPWPVbdNRoelpp+nQhux2EUn1UvgHoQJ03prWyTdc4uzAg=="
+        }
+       }
+      }
+     }
+    },
+    "signature": {
+     "alg": "Ed25519",
+     "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc=",
+     "value": "rvKNq6uyl9lA2oqMfH4YCaVsKzn1aj7da05wQap0Rayr4MOgWZbh4xVpQJ7jTZRg02q2osPj/SAYGT8kOdLeBQ=="
+    }
+   },
+   "trusted": [
+    "issuer"
+   ],
+   "store": false,
+   "revocation_lists": [],
+   "steps": [
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "MID-10231",
+      "category": "4900",
+      "amount": {
+       "value": 4000,
+       "currency": "GBP"
+      },
+      "action": "pay"
+     },
+     "expect": {
+      "decision": "deny",
+      "failed": [
+       "limits_store"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "delegation: a three-link chain, each link narrower, roots in the issuer",
+   "signer": "grandchild",
+   "mandate": {
+    "mandate": {
+     "version": "mandatekit/v0.2",
+     "spec": "AP2-draft-2026Q2",
+     "mandate_id": "leaf-1",
+     "subject": {
+      "agent_id": "leaf-agent"
+     },
+     "issued_at": "2026-10-12T19:27:38Z",
+     "expires_at": "2026-10-19T12:00:00Z",
+     "constraints": {
+      "intent": "pay the energy bill",
+      "categories": [
+       "bank",
+       "4900"
+      ],
+      "counterparties": {
+       "MID-10231": [
+        "read"
+       ]
+      },
+      "max_amount": {
+       "value": 0,
+       "currency": "GBP"
+      },
+      "actions": [
+       "read"
+      ],
+      "delegation": {
+       "parent": {
+        "mandate": {
+         "version": "mandatekit/v0.2",
+         "spec": "AP2-draft-2026Q2",
+         "mandate_id": "mid-1",
+         "subject": {
+          "agent_id": "mid-agent",
+          "public_key": "JUO5L/EJVRFHatyDadtt3JM2ZaEZeN2hQE7hBmypVZ0="
+         },
+         "issued_at": "2026-10-12T19:27:38Z",
+         "expires_at": "2026-10-19T12:00:00Z",
+         "constraints": {
+          "intent": "pay the energy bill",
+          "categories": [
+           "bank",
+           "4900"
+          ],
+          "counterparties": {
+           "MID-10231": [
+            "read",
+            "pay"
+           ]
+          },
+          "max_amount": {
+           "value": 5000,
+           "currency": "GBP"
+          },
+          "actions": [
+           "read",
+           "pay"
+          ],
+          "delegation": {
+           "parent": {
+            "mandate": {
+             "version": "mandatekit/v0.2",
+             "spec": "AP2-draft-2026Q2",
+             "mandate_id": "root-2",
+             "subject": {
+              "agent_id": "agent-tidy",
+              "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc="
+             },
+             "issued_at": "2026-10-11T12:00:00Z",
+             "expires_at": "2026-10-19T12:00:00Z",
+             "constraints": {
+              "intent": "pay the energy bill",
+              "categories": [
+               "bank",
+               "4900"
+              ],
+              "counterparties": {
+               "harbourline": [
+                "read",
+                "submit",
+                "transfer"
+               ],
+               "MID-10231": [
+                "read",
+                "draft",
+                "pay"
+               ]
+              },
+              "max_amount": {
+               "value": 15000,
+               "currency": "GBP"
+              },
+              "actions": [
+               "read",
+               "draft",
+               "submit",
+               "pay",
+               "transfer"
+              ],
+              "approval": {
+               "actions": [
+                "submit"
+               ]
+              },
+              "delegation": {
+               "max_depth": 2
+              }
+             }
+            },
+            "signature": {
+             "alg": "Ed25519",
+             "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+             "value": "v2A6NH8k0c0k1a6KinIvQrQITRB36J79aaC540FN5udtFaO8qaAAT3nGOZouyGNGnK43uTSYB2hFgu7SczfGDg=="
+            }
+           },
+           "max_depth": 1
+          }
+         }
+        },
+        "signature": {
+         "alg": "Ed25519",
+         "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc=",
+         "value": "Aj4IL6SoSIg3ofdiBRjfw7MWvKJDJ8wCpJ38D4ieedPQaUJA7iUSSnYWet9A//ZdICxMZ/oRDF0NhtrZlWdqAQ=="
+        }
+       }
+      }
+     }
+    },
+    "signature": {
+     "alg": "Ed25519",
+     "public_key": "JUO5L/EJVRFHatyDadtt3JM2ZaEZeN2hQE7hBmypVZ0=",
+     "value": "9RBahpLMgz2MhqasA/abGxXtGlcVmScrJBIOZLRvxST3+vQmSsCY6/6PlNgceht4h6Xqwm2KRtKywHvspgTRDA=="
+    }
+   },
+   "trusted": [
+    "issuer"
+   ],
+   "store": false,
+   "revocation_lists": [],
+   "steps": [
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "MID-10231",
+      "category": "4900",
+      "amount": {
+       "value": 0,
+       "currency": "GBP"
+      },
+      "action": "read"
+     },
+     "expect": {
+      "decision": "allow",
+      "failed": []
+     }
+    },
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "MID-10231",
+      "category": "4900",
+      "amount": {
+       "value": 4000,
+       "currency": "GBP"
+      },
+      "action": "pay"
+     },
+     "expect": {
+      "decision": "deny",
+      "failed": [
+       "action",
+       "amount",
+       "counterparty_scope"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "delegation_scope: the third link widens the second",
+   "signer": "grandchild",
+   "mandate": {
+    "mandate": {
+     "version": "mandatekit/v0.2",
+     "spec": "AP2-draft-2026Q2",
+     "mandate_id": "leaf-wide",
+     "subject": {
+      "agent_id": "leaf-agent"
+     },
+     "issued_at": "2026-10-12T19:27:38Z",
+     "expires_at": "2026-10-19T12:00:00Z",
+     "constraints": {
+      "intent": "pay the energy bill",
+      "categories": [
+       "bank",
+       "4900"
+      ],
+      "counterparties": {
+       "MID-10231": [
+        "read",
+        "pay",
+        "transfer"
+       ]
+      },
+      "max_amount": {
+       "value": 5000,
+       "currency": "GBP"
+      },
+      "actions": [
+       "read",
+       "pay",
+       "transfer"
+      ],
+      "delegation": {
+       "parent": {
+        "mandate": {
+         "version": "mandatekit/v0.2",
+         "spec": "AP2-draft-2026Q2",
+         "mandate_id": "mid-1",
+         "subject": {
+          "agent_id": "mid-agent",
+          "public_key": "JUO5L/EJVRFHatyDadtt3JM2ZaEZeN2hQE7hBmypVZ0="
+         },
+         "issued_at": "2026-10-12T19:27:38Z",
+         "expires_at": "2026-10-19T12:00:00Z",
+         "constraints": {
+          "intent": "pay the energy bill",
+          "categories": [
+           "bank",
+           "4900"
+          ],
+          "counterparties": {
+           "MID-10231": [
+            "read",
+            "pay"
+           ]
+          },
+          "max_amount": {
+           "value": 5000,
+           "currency": "GBP"
+          },
+          "actions": [
+           "read",
+           "pay"
+          ],
+          "delegation": {
+           "parent": {
+            "mandate": {
+             "version": "mandatekit/v0.2",
+             "spec": "AP2-draft-2026Q2",
+             "mandate_id": "root-2",
+             "subject": {
+              "agent_id": "agent-tidy",
+              "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc="
+             },
+             "issued_at": "2026-10-11T12:00:00Z",
+             "expires_at": "2026-10-19T12:00:00Z",
+             "constraints": {
+              "intent": "pay the energy bill",
+              "categories": [
+               "bank",
+               "4900"
+              ],
+              "counterparties": {
+               "harbourline": [
+                "read",
+                "submit",
+                "transfer"
+               ],
+               "MID-10231": [
+                "read",
+                "draft",
+                "pay"
+               ]
+              },
+              "max_amount": {
+               "value": 15000,
+               "currency": "GBP"
+              },
+              "actions": [
+               "read",
+               "draft",
+               "submit",
+               "pay",
+               "transfer"
+              ],
+              "approval": {
+               "actions": [
+                "submit"
+               ]
+              },
+              "delegation": {
+               "max_depth": 2
+              }
+             }
+            },
+            "signature": {
+             "alg": "Ed25519",
+             "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+             "value": "v2A6NH8k0c0k1a6KinIvQrQITRB36J79aaC540FN5udtFaO8qaAAT3nGOZouyGNGnK43uTSYB2hFgu7SczfGDg=="
+            }
+           },
+           "max_depth": 1
+          }
+         }
+        },
+        "signature": {
+         "alg": "Ed25519",
+         "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc=",
+         "value": "Aj4IL6SoSIg3ofdiBRjfw7MWvKJDJ8wCpJ38D4ieedPQaUJA7iUSSnYWet9A//ZdICxMZ/oRDF0NhtrZlWdqAQ=="
+        }
+       }
+      }
+     }
+    },
+    "signature": {
+     "alg": "Ed25519",
+     "public_key": "JUO5L/EJVRFHatyDadtt3JM2ZaEZeN2hQE7hBmypVZ0=",
+     "value": "i1Vzmo6rTQ/gHTBhJiZJMGFO3EuqHNC6Bc1nJvhHItZ5dhUNHE0FsWFCulqgGZhMKkmd5+HPjVgJtJr8D2ocAQ=="
+    }
+   },
+   "trusted": [
+    "issuer"
+   ],
+   "store": false,
+   "revocation_lists": [],
+   "steps": [
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "MID-10231",
+      "category": "4900",
+      "amount": {
+       "value": 0,
+       "currency": "GBP"
+      },
+      "action": "read"
+     },
+     "expect": {
+      "decision": "deny",
+      "failed": [
+       "delegation_scope",
+       "issuer_trusted"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "anchor: a mandate edited after signing",
+   "signer": null,
+   "mandate": {
+    "mandate": {
+     "version": "mandatekit/v0.2",
+     "spec": "AP2-draft-2026Q2",
+     "mandate_id": "m-scoped",
+     "subject": {
+      "agent_id": "agent-tidy",
+      "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc="
+     },
+     "issued_at": "2026-10-11T12:00:00Z",
+     "expires_at": "2026-10-19T12:00:00Z",
+     "constraints": {
+      "intent": "pay the energy bill",
+      "categories": [
+       "bank",
+       "4900"
+      ],
+      "counterparties": {
+       "harbourline": [
+        "read",
+        "submit",
+        "transfer"
+       ],
+       "MID-10231": [
+        "read",
+        "draft",
+        "pay"
+       ]
+      },
+      "max_amount": {
+       "value": 999999,
+       "currency": "GBP"
+      },
+      "actions": [
+       "read",
+       "draft",
+       "submit",
+       "pay",
+       "transfer"
+      ],
+      "approval": {
+       "actions": [
+        "submit"
+       ]
+      }
+     }
+    },
+    "signature": {
+     "alg": "Ed25519",
+     "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+     "value": "v47SqSxzHzyOP6xTOOg4myKNctVjU7wNotmNwj4+sobVV/g+iiE6Xu6bOszW9d3WWARCpf+ocUhvN3KkFW0sCg=="
+    }
+   },
+   "trusted": [
+    "issuer"
+   ],
+   "store": false,
+   "revocation_lists": [],
+   "steps": [
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "MID-10231",
+      "category": "4900",
+      "amount": {
+       "value": 11840,
+       "currency": "GBP"
+      },
+      "action": "pay"
+     },
+     "expect": {
+      "decision": "deny",
+      "failed": [],
+      "signature_valid": false
+     }
+    }
+   ]
+  },
+  {
+   "name": "anchor: a mandate signed by a key outside the trusted set",
+   "signer": "stranger",
+   "mandate": {
+    "mandate": {
+     "version": "mandatekit/v0.2",
+     "spec": "AP2-draft-2026Q2",
+     "mandate_id": "m-stranger",
+     "subject": {
+      "agent_id": "agent-tidy",
+      "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc="
+     },
+     "issued_at": "2026-10-11T12:00:00Z",
+     "expires_at": "2026-10-19T12:00:00Z",
+     "constraints": {
+      "intent": "pay the energy bill",
+      "categories": [
+       "bank",
+       "4900"
+      ],
+      "counterparties": {
+       "harbourline": [
+        "read",
+        "submit",
+        "transfer"
+       ],
+       "MID-10231": [
+        "read",
+        "draft",
+        "pay"
+       ]
+      },
+      "max_amount": {
+       "value": 15000,
+       "currency": "GBP"
+      },
+      "actions": [
+       "read",
+       "draft",
+       "submit",
+       "pay",
+       "transfer"
+      ],
+      "approval": {
+       "actions": [
+        "submit"
+       ]
+      }
+     }
+    },
+    "signature": {
+     "alg": "Ed25519",
+     "public_key": "a/LUxZOREoNb/fwttS8rnbc1+rVPYnP+QUm2UFvXaUY=",
+     "value": "pvMUj6LTFJt8P5LardUJvp3Iais8K3xIp1B2J1/rvT9yyfhhSPNW1K48Umzuv9EEQgFQ5F1j/Qn9SwOjLQQlDQ=="
+    }
+   },
+   "trusted": [
+    "issuer"
+   ],
+   "store": false,
+   "revocation_lists": [],
+   "steps": [
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "MID-10231",
+      "category": "4900",
+      "amount": {
+       "value": 11840,
+       "currency": "GBP"
+      },
+      "action": "pay"
+     },
+     "expect": {
+      "decision": "deny",
+      "failed": [
+       "issuer_trusted"
+      ],
+      "signature_valid": true
+     }
+    }
+   ]
+  },
+  {
+   "name": "anchor: over the cap",
+   "signer": "issuer",
+   "mandate": {
+    "mandate": {
+     "version": "mandatekit/v0.2",
+     "spec": "AP2-draft-2026Q2",
+     "mandate_id": "m-scoped",
+     "subject": {
+      "agent_id": "agent-tidy",
+      "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc="
+     },
+     "issued_at": "2026-10-11T12:00:00Z",
+     "expires_at": "2026-10-19T12:00:00Z",
+     "constraints": {
+      "intent": "pay the energy bill",
+      "categories": [
+       "bank",
+       "4900"
+      ],
+      "counterparties": {
+       "harbourline": [
+        "read",
+        "submit",
+        "transfer"
+       ],
+       "MID-10231": [
+        "read",
+        "draft",
+        "pay"
+       ]
+      },
+      "max_amount": {
+       "value": 15000,
+       "currency": "GBP"
+      },
+      "actions": [
+       "read",
+       "draft",
+       "submit",
+       "pay",
+       "transfer"
+      ],
+      "approval": {
+       "actions": [
+        "submit"
+       ]
+      }
+     }
+    },
+    "signature": {
+     "alg": "Ed25519",
+     "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+     "value": "v47SqSxzHzyOP6xTOOg4myKNctVjU7wNotmNwj4+sobVV/g+iiE6Xu6bOszW9d3WWARCpf+ocUhvN3KkFW0sCg=="
+    }
+   },
+   "trusted": [
+    "issuer"
+   ],
+   "store": false,
+   "revocation_lists": [],
+   "steps": [
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "MID-10231",
+      "category": "4900",
+      "amount": {
+       "value": 24000,
+       "currency": "GBP"
+      },
+      "action": "pay"
+     },
+     "expect": {
+      "decision": "deny",
+      "failed": [
+       "amount"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "anchor: actions alone are not scope",
+   "signer": "issuer",
+   "mandate": {
+    "mandate": {
+     "version": "mandatekit/v0.2",
+     "spec": "AP2-draft-2026Q2",
+     "mandate_id": "m-unbounded",
+     "subject": {
+      "agent_id": "agent-tidy"
+     },
+     "issued_at": "2026-10-11T12:00:00Z",
+     "expires_at": "2026-10-19T12:00:00Z",
+     "constraints": {
+      "actions": [
+       "read"
+      ]
+     }
+    },
+    "signature": {
+     "alg": "Ed25519",
+     "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+     "value": "PVjuUUnPmIHNQrZNEMdUFkPbfPtQVBYlhslxdCBahpd7lFPToLDPkpdbRTwculyMbWmOMOd4j/jcazrmkPhfDw=="
+    }
+   },
+   "trusted": [
+    "issuer"
+   ],
+   "store": false,
+   "revocation_lists": [],
+   "steps": [
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "MID-10231",
+      "category": "4900",
+      "amount": {
+       "value": 0,
+       "currency": "GBP"
+      },
+      "action": "read"
+     },
+     "expect": {
+      "decision": "deny",
+      "failed": [
+       "has_scope"
+      ]
+     }
+    }
+   ]
+  }
+ ]
+}

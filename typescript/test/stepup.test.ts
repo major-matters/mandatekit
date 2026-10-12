@@ -187,7 +187,7 @@ test("stepMandate refuses a target with nothing to scope to", () => {
 test("cross-walk to RFC 9396 authorization_details", () => {
   const m = bankMandate();
   const [d] = toAuthorizationDetails(m);
-  assert.equal(d.type, "mandatekit:mandate:v0");
+  assert.equal(d.type, "mandatekit:mandate:v0.2");
   assert.equal(d.identifier, m.mandate_id);
   assert.deepEqual(d.actions, ["read", "draft", "submit", "pay", "cancel"]);
   assert.deepEqual(d.locations, ["MID-10231", "MID-10477", "MID-30905"]);

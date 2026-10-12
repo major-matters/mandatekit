@@ -63,7 +63,9 @@ Given a signed mandate and a candidate transaction, it returns a verdict:
 }
 ```
 
-It checks signature, expiry, category, merchant allow/deny, and amount cap —
+It checks signature, issuer, wire version, window (start and expiry), category,
+merchant allow/deny, per-verb counterparty scope, amount cap, verb, approval
+rules, revocation, usage limits and the delegation chain, and it does so
 **deterministically**: same inputs, same verdict, every time. The one fuzzy check,
 intent-basket alignment ("do running shoes satisfy the stated intent?"), is
 **optional and injected**; a missing or failing model never turns a deny into an
@@ -112,7 +114,142 @@ by design (unknown constraints fail closed).
 `toAuthorizationDetails(mandate)` renders a mandate as an RFC 9396
 `authorization_details` entry, the shape open-banking consent already rides
 on, so a bank's existing consent stack can read it. Draft mapping; the `type`
-is MandateKit's own until a registry assigns one.
+(`mandatekit:mandate:v0.2`) is MandateKit's own until a registry assigns one.
+`valid_from` is `not_before` when the mandate has one; `locations` is the
+merchant allow list or, for a per-verb scoped mandate, the sorted counterparty
+ids; the per-verb map, limits, revocation list id and a delegation summary
+travel as type-specific fields.
+
+## Scope, time, limits, revocation and delegation (0.2.0)
+
+The Bench found the gap. In entries two and three the one action that slipped
+past every layer was `pay harbourline £84.00`: the bank was on every job's
+allow list because the agent had to read from it and submit to it, so a
+payment to the bank passed the merchant check. 0.2 closes that gap and the
+four next to it. Every new field lives under `constraints`, so a 0.1 verifier
+refuses a 0.2 mandate outright (unknown constraint keys fail closed) instead of
+ignoring the part it cannot enforce. The wire version is `mandatekit/v0.2`;
+the verifier still accepts `mandatekit/v0` mandates that use only 0.1 keys.
+
+**Per-verb counterparty scope.** `counterparties` maps each counterparty to
+the verbs allowed there. A `pay` to a counterparty scoped to read, submit and
+transfer is denied with `counterparty_scope`. The 0.1 flat `merchants.allow`
+still works and means "every allowed verb at these merchants".
+
+```json
+"constraints": {
+  "counterparties": {
+    "harbourline": ["read", "submit", "transfer"],
+    "MID-10231": ["read", "draft", "pay"]
+  },
+  "actions": ["read", "draft", "submit", "pay", "transfer"],
+  "max_amount": {"value": 15000, "currency": "GBP"}
+}
+```
+
+**Time windows.** `not_before` beside the existing `expires_at`. Before the
+window opens the verdict is `deny` with `not_before`; after it closes,
+`not_expired`, as before.
+
+```json
+"constraints": {"not_before": "2026-10-13T09:00:00Z", "max_amount": {"value": 15000, "currency": "GBP"}}
+```
+
+**Usage limits.** `limits` declares `max_uses` and `max_total_amount` over
+the mandate's life and, per `window_seconds`, `max_uses_per_window` and
+`max_amount_per_window`; `actions` says which verbs count (so one `pay` per
+job leaves the reads alone). Limits are stateful, so `verify` **requires a
+store** when a mandate declares them and denies with `limits_store` when
+none is passed. The verifier only reads; after acting on an `allow` you call
+`record_use(signed, txn, store, now=...)` / `recordUse(...)`, which writes a
+use under the mandate and every ancestor in its chain. `InMemoryUsageStore`
+ships as the reference store (per process; a persistent store is roadmap
+work). The clock is injected through `now`, as in BudgetGuard.
+
+```json
+"constraints": {
+  "limits": {"actions": ["pay"], "max_uses": 1, "window_seconds": 3600, "max_amount_per_window": {"value": 20000, "currency": "GBP"}},
+  "counterparties": {"shop": ["read", "pay"]}, "max_amount": {"value": 15000, "currency": "GBP"}
+}
+```
+
+```python
+store = InMemoryUsageStore()
+v = verify(signed, pay, trusted_keys=[pub], store=store, now=now)      # allow
+record_use(signed, pay, store, now=now)
+verify(signed, pay, trusted_keys=[pub], store=store, now=now)          # deny, max_uses
+```
+
+**Revocation.** `revocation` names an issuer-signed list the mandate must be
+checked against. You supply the list in `revocation_lists=` /
+`revocationLists:`; the verifier accepts it only if its signature verifies and
+it was signed by the mandate's issuer or a pinned trusted key (and, with
+`max_age_seconds`, is fresh enough). The mandate's id on the list is
+`revoked`; a declared list that is missing, forged, altered, stale or under
+another id is `revocation_list`, a deny.
+
+```json
+"constraints": {"revocation": {"list_id": "rl-alex-2026-10", "max_age_seconds": 86400}, "max_amount": {"value": 15000, "currency": "GBP"}}
+```
+
+```python
+lst = sign_revocation_list(build_revocation_list(list_id="rl-alex-2026-10", revoked=[mandate_id]), issuer_seed)
+verify(signed, txn, trusted_keys=[pub], revocation_lists=[lst])         # deny, revoked
+```
+
+**Delegation.** A root opts in with `delegation: {"max_depth": n}` and names
+the delegate's key in `subject.public_key`. The delegate builds a child with
+`delegate_mandate(parent_signed, agent_id=..., ...)` / `delegateMandate`,
+signs it with that key, and the child carries `delegation: {"parent":
+<signed parent>}`. `verify` walks the chain to the root, which must be
+signed by a trusted key, and denies unless every link is signed by its
+parent's subject key, the parent opted in with depth to spare, and the child
+only narrows: a subset of counterparties and verbs, lower or equal caps, a
+window inside the parent's, no new verbs or categories, the parent's deny
+list and approval rules kept where they still apply. Structure and signature
+failures are `delegation`; widening is `delegation_scope`, with the field
+named. Each link's revocation list and limits apply, so a revoked parent
+takes its children with it. Because the parent travels inside the child's
+signed bytes, editing any link breaks the leaf's signature.
+
+```json
+{
+  "subject": {"agent_id": "sub-agent-9"},
+  "constraints": {
+    "counterparties": {"MID-10231": ["read", "pay"]},
+    "max_amount": {"value": 5000, "currency": "GBP"},
+    "actions": ["read", "pay"],
+    "delegation": {"parent": {"mandate": {"...": "the signed root, max_depth 1, subject.public_key = this child's signer"}, "signature": {"...": "..."}}}
+  }
+}
+```
+
+**Reason codes.** The `constraint` field of every entry in `matched` /
+`failed` is one of these, exported as `REASON_CODES`:
+
+| Code | Means |
+|---|---|
+| `version` | the mandate's wire version is not one this verifier knows |
+| `issuer_trusted` | the signer (or, for a chain, the root's signer) is not a pinned key |
+| `constraints_enforceable` | an unknown constraint key, or a 0.2 key on a `mandatekit/v0` mandate |
+| `has_scope` | no category, merchant, counterparty or amount bound at all |
+| `not_expired`, `not_before` | outside the window, after and before |
+| `category`, `merchant_allow`, `merchant_deny`, `amount`, `action` | the 0.1 scope checks |
+| `counterparty_scope` | the counterparty is not listed, or the verb is not allowed there |
+| `approval` | a step mandate is needed (verdict `ask`) or the one presented was rejected |
+| `revocation_list`, `revoked` | the declared list is unavailable or invalid; the mandate is on it |
+| `limits`, `limits_store` | a malformed `limits` object; no store supplied, or the store failed |
+| `max_uses`, `max_total_amount`, `max_uses_per_window`, `max_amount_per_window` | the limit that would be crossed |
+| `delegation`, `delegation_scope` | the chain is malformed, unsigned by the right key or not permitted; a child widens its parent |
+| `intent_alignment` | the injected scorer's verdict |
+
+Both SDKs replay `fixtures/verdict-matrix.json` (71 cases, 108 verdicts) and
+the TypeScript suite re-signs every Python-signed envelope in it, so the two
+implementations agree verdict for verdict and byte for byte. Still not in
+0.2: a store that survives a restart or is shared across processes, replay
+protection for a mandate with no `limits` (declare `max_uses` if you want
+it), the MCP proxy mapping tool calls onto `actions`, and any third-party
+audit.
 
 ## Gate an MCP server
 
@@ -145,12 +282,15 @@ altered and that whoever holds the key signed it — not that you trust that key
 So `verify()` requires you to **pin the issuer** with `trusted_keys` / `trustedKeys`,
 and **fails closed** (denies) if you supply neither that nor an explicit
 `allow_unverified_issuer` opt-in. It also denies unbounded mandates (no scope),
-empty allow-lists, and unknown constraint keys, and requires integer amounts
-(compared like-for-like; the caller picks the unit) so signatures stay canonical
-across both languages. These rules are
-covered by a security-regression test block in each SDK. There is **no replay
-protection in v0** — usage/velocity limits need the roadmap registry, so they are
-omitted rather than parsed-and-ignored. Full notes in
+empty allow-lists, unknown constraint keys and unknown wire versions, and requires
+integer amounts (compared like-for-like; the caller picks the unit) so signatures
+stay canonical across both languages. These rules are covered by a
+security-regression test block in each SDK. **Stateful rules need state:** since
+0.2 a mandate can declare usage and velocity limits (`limits`) and a revocation
+list (`revocation`), and `verify()` denies when the caller does not supply the
+store or the signed list they need, rather than skipping the check. A mandate
+without `limits` has no replay protection, by declaration rather than by
+omission; the store is in memory and per process in 0.2. Full notes in
 [`python/README.md`](python/README.md#security-model-read-this).
 
 ## Design choices (and non-goals)
@@ -166,9 +306,10 @@ omitted rather than parsed-and-ignored. Full notes in
 - **No fine-tuned model.** Where an LLM is used (NL parsing, intent scoring) it is
   off-the-shelf and optional. A fine-tuned verifier model is deliberately **out of
   v0 scope** — it's a separate, high-cost ML project.
-- **Deferred to roadmap, not in this repo:** the hosted mandate registry,
-  revocation propagation, the audit-log service, billing tiers, and stateful
-  replay/usage enforcement. v0 is the local library only.
+- **Deferred to roadmap, not in this repo:** a store that survives a restart
+  or is shared across processes, distribution of revocation lists (0.2 checks
+  a list you hand it; fetching one is yours), the hosted mandate registry, and
+  the audit-log service. v0 is the local library only.
 
 ## Layout
 
@@ -176,6 +317,7 @@ omitted rather than parsed-and-ignored. Full notes in
 mandatekit/
   python/        # pip-installable package + standalone tests
   typescript/    # npm package, runs on Node 22+ via built-in type-stripping
+  fixtures/      # verdict-matrix.json, replayed by both suites, and its generator
   LICENSE        # MIT
 ```
 
@@ -190,6 +332,7 @@ cd python && PYTHONPATH=. python3 ../demo.py
 
 # Python tests
 cd python && PYTHONPATH=. python3 tests/test_mandatekit.py
+cd python && PYTHONPATH=. python3 tests/test_v02.py          # 0.2 features + the shared fixture
 
 # TypeScript tests (Node 22+)
 cd typescript && npm test

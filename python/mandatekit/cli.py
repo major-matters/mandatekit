@@ -46,6 +46,10 @@ def main(argv=None) -> int:
                     help="trusted issuer public key, base64 (from keygen). Repeatable.")
     pv.add_argument("--allow-unverified-issuer", action="store_true",
                     help="accept any signer (integrity only). Use with care.")
+    pv.add_argument("--revocation-list", action="append", default=[], metavar="FILE",
+                    help="signed revocation list JSON file the mandate declares. Repeatable. "
+                         "(The CLI holds no usage state, so a mandate with `limits` is denied here; "
+                         "enforce limits from code with a store, or through mandatekit-mcp.)")
 
     args = parser.parse_args(argv)
 
@@ -74,6 +78,7 @@ def main(argv=None) -> int:
             transaction,
             trusted_keys=args.trust or None,
             allow_unverified_issuer=args.allow_unverified_issuer,
+            revocation_lists=[_read_json(p) for p in args.revocation_list],
         )
         print(json.dumps(verdict, indent=2))
         return 0 if verdict["decision"] == "allow" else 1

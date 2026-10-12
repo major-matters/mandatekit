@@ -74,12 +74,11 @@ def _unb64(s: str) -> bytes:
     return base64.b64decode(s)
 
 
-def sign_mandate(mandate: Dict, private_key: bytes) -> Dict:
-    """Wrap a mandate dict in a signed envelope."""
+def _sign_envelope(payload_key: str, payload: Dict, private_key: bytes) -> Dict:
     public_key = _public_from_seed(private_key)
-    signature = _sign(canonicalize(mandate), private_key)
+    signature = _sign(canonicalize(payload), private_key)
     return {
-        "mandate": mandate,
+        payload_key: payload,
         "signature": {
             "alg": "Ed25519",
             "public_key": _b64(public_key),
@@ -88,15 +87,39 @@ def sign_mandate(mandate: Dict, private_key: bytes) -> Dict:
     }
 
 
-def verify_signature(signed: Dict) -> bool:
-    """True iff the envelope's signature matches its mandate. Never raises —
-    malformed input (bad base64, non-canonicalizable values, etc.) returns False."""
+def _verify_envelope(payload_key: str, signed) -> bool:
+    if not isinstance(signed, dict):
+        return False
     sig = signed.get("signature") or {}
     if not isinstance(sig, dict) or sig.get("alg") != "Ed25519":
         return False
     try:
         public_key = _unb64(sig["public_key"])
         value = _unb64(sig["value"])
-        return _verify(value, canonicalize(signed["mandate"]), public_key)
+        return _verify(value, canonicalize(signed[payload_key]), public_key)
     except Exception:
         return False
+
+
+def sign_mandate(mandate: Dict, private_key: bytes) -> Dict:
+    """Wrap a mandate dict in a signed envelope."""
+    return _sign_envelope("mandate", mandate, private_key)
+
+
+def verify_signature(signed: Dict) -> bool:
+    """True iff the envelope's signature matches its mandate. Never raises:
+    malformed input (bad base64, non-canonicalizable values, etc.) returns False."""
+    return _verify_envelope("mandate", signed)
+
+
+def sign_revocation_list(revocation_list: Dict, private_key: bytes) -> Dict:
+    """Wrap a revocation list (see `build_revocation_list`) in a signed envelope
+    under the key "list". Sign it with the key that signed the mandates it
+    revokes: the verifier accepts a list only from the mandate's own issuer or a
+    pinned trusted key."""
+    return _sign_envelope("list", revocation_list, private_key)
+
+
+def verify_revocation_list_signature(signed: Dict) -> bool:
+    """True iff the envelope's signature matches its list. Never raises."""
+    return _verify_envelope("list", signed)

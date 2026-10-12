@@ -71,10 +71,66 @@ after signing, or a mandate signed by a key you did not pin all return `"deny"`.
 A valid signature proves **integrity, not authority**. Pin the issuer with
 `trustedKeys`; with neither `trustedKeys` nor `allowUnverifiedIssuer: true`,
 `verify()` **fails closed**. Absent scope is denied, empty allow-lists mean
-"allow nothing", unknown constraint keys are denied, and amounts must be integers
-(compared like-for-like; caller picks the unit). No replay protection in v0
-(`max_uses` is out, not ignored). Same
-model as the Python SDK — see [`../python/README.md`](../python/README.md).
+"allow nothing", unknown constraint keys and wire versions are denied, and
+amounts must be integers (compared like-for-like; caller picks the unit).
+Stateful rules need state (0.2): a mandate that declares `limits` is denied
+without `store`, one that declares `revocation` is denied without the signed
+list in `revocationLists`. A mandate without `limits` has no replay
+protection; the reference store is in memory and per process. Same model as
+the Python SDK; see [`../python/README.md`](../python/README.md).
+
+## Scope, time, limits, revocation and delegation (0.2.0)
+
+All five live under `constraints`; see the [root README](../README.md#scope-time-limits-revocation-and-delegation-020)
+for the design and the reason codes. In TypeScript:
+
+```ts
+import {
+  buildMandate, delegateMandate, signMandate, verify, recordUse,
+  InMemoryUsageStore, buildRevocationList, signRevocationList,
+} from "mandatekit";
+
+const now = new Date();
+const mandate = buildMandate({
+  agentId: "agent-tidy",
+  agentPublicKey: delegatePublicKey,                   // the key the agent may delegate with
+  categories: ["bank", "4900"],
+  counterparties: { harbourline: ["read", "submit", "transfer"],   // the bank, never a payee
+                    "MID-10231": ["read", "draft", "pay"] },
+  actions: ["read", "draft", "submit", "pay", "transfer"],
+  maxAmount: { value: 15000, currency: "GBP" },
+  notBefore: new Date(now.getTime() + 3600_000),         // window start
+  limits: { actions: ["pay"], max_uses: 1 },             // one payment per mandate
+  revocation: { list_id: "rl-alex-2026-10", max_age_seconds: 86400 },
+  delegation: { max_depth: 1 },                          // may be delegated one level
+  ttlDays: 7,
+});
+const signed = signMandate(mandate, issuerSeed);
+
+const store = new InMemoryUsageStore();
+const list = signRevocationList(buildRevocationList({ listId: "rl-alex-2026-10", revoked: [] }), issuerSeed);
+const pay = { action: "pay", merchant: "MID-10231", category: "4900", amount: { value: 11840, currency: "GBP" } };
+const later = new Date(now.getTime() + 7200_000);
+const verdict = verify(signed, pay, { trustedKeys: [issuerPublicKey], now: later, store, revocationLists: [list] });
+if (verdict.decision === "allow") {
+  // act, then
+  recordUse(signed, pay, store, { now: later });
+}
+
+// pay the bank: deny, counterparty_scope. A second pay: deny, max_uses.
+// Before the window: deny, not_before. Without the store: deny, limits_store.
+// Without the list: deny, revocation_list. On the list: deny, revoked.
+
+const child = delegateMandate(signed, { agentId: "sub-agent", counterparties: { "MID-10231": ["read", "pay"] },
+  maxAmount: { value: 5000, currency: "GBP" }, actions: ["read", "pay"], approval: null });
+const signedChild = signMandate(child, delegateSeed);   // verifies against trustedKeys: [issuerPublicKey]
+```
+
+In `delegateMandate`, a scope option left `undefined` inherits the parent's
+value, a value narrows it, and `null` drops it. `verify()` never throws; a
+malformed mandate, store record, list or chain is a deny with the reason
+named. `recordUse` throws on a malformed envelope rather than silently
+recording nothing.
 
 ## The two pieces
 
@@ -96,7 +152,7 @@ compile(text, { ..., parser: () => parsed })`, and likewise pass a pre-scored
 ## Tests
 
 ```bash
-npm test          # node --test, no dev dependencies
+npm test          # node --test; includes v02.test.ts, which replays fixtures/verdict-matrix.json
 ```
 
 ## License

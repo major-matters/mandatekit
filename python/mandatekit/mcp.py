@@ -25,6 +25,13 @@ Fail-closed, in keeping with the rest of the kit:
   ``isError: true``, so the agent sees *why* and the session survives;
 - issuer trust is mandatory: the proxy will not start without ``--trust``.
 
+0.2: the proxy keeps an in-memory usage store for the session and records
+every forwarded call, so a mandate's ``limits`` (for example ``max_uses``)
+hold across the session; ``--revocation-list @file`` (repeatable) supplies the
+signed lists a mandate declares under ``revocation``. The store does not
+survive the proxy process; a mandate with ``limits`` starts each session at
+zero uses.
+
 Stdlib only. No model, no network. A deny is a deny before the server ever
 sees the request.
 """
@@ -36,9 +43,11 @@ import json
 import subprocess
 import sys
 import threading
+from datetime import datetime
 from typing import Dict, List, Optional, Tuple
 
-from .verifier import verify
+from .store import InMemoryUsageStore
+from .verifier import record_use, verify
 
 # Gate outcomes for a single client->server line.
 FORWARD = "forward"   # pass the original line to the server
@@ -76,13 +85,28 @@ def _deny_response(request_id, rationale: str) -> Dict:
     }
 
 
+def load_json_arg(arg: str):
+    """Resolve a JSON argument: inline JSON, or @path to a file containing it."""
+    if arg.startswith("@"):
+        with open(arg[1:], "r", encoding="utf-8") as f:
+            return json.load(f)
+    return json.loads(arg)
+
+
 def gate_line(
     line: str,
     signed: Dict,
     trusted: List[str],
     server_name: Optional[str] = None,
+    store=None,
+    revocation_lists=None,
+    now: Optional[datetime] = None,
 ) -> Tuple[str, Optional[Dict]]:
-    """Decide what to do with one client->server line. Fail-closed throughout."""
+    """Decide what to do with one client->server line. Fail-closed throughout.
+
+    `store` holds usage state for a mandate with `limits`; a forwarded call is
+    recorded in it. `revocation_lists` carries the signed lists a mandate
+    declares. `now` pins the clock (tests); the wall clock otherwise."""
     try:
         msg = json.loads(line)
     except (ValueError, TypeError):
@@ -112,8 +136,11 @@ def gate_line(
         if amount is not None:
             transaction["amount"] = amount
 
-        verdict = verify(signed, transaction, trusted_keys=trusted)
+        verdict = verify(signed, transaction, trusted_keys=trusted, now=now,
+                         store=store, revocation_lists=revocation_lists)
         if verdict.get("decision") == "allow":
+            if store is not None:
+                record_use(signed, transaction, store, now=now)
             return FORWARD, None
         rationale = verdict.get("rationale") or "denied by mandate"
     except Exception as e:  # any gating failure is a deny, never a forward
@@ -146,6 +173,8 @@ def main(argv: Optional[List[str]] = None) -> int:
     parser.add_argument("--server-name", default=None,
                         help="optional merchant name for this server, matched against the "
                              "mandate's merchant allow/deny lists")
+    parser.add_argument("--revocation-list", action="append", default=[], metavar="JSON_OR_@FILE",
+                        help="a signed revocation list the mandate declares (inline JSON or @path). Repeatable.")
     parser.add_argument("server", nargs=argparse.REMAINDER,
                         help="-- followed by the MCP server command to wrap")
     args = parser.parse_args(argv)
@@ -159,6 +188,8 @@ def main(argv: Optional[List[str]] = None) -> int:
     with open(args.mandate, "r", encoding="utf-8") as f:
         signed = json.load(f)
     trusted = [load_trusted(args.trust)]
+    revocation_lists = [load_json_arg(a) for a in args.revocation_list]
+    store = InMemoryUsageStore()
 
     child = subprocess.Popen(
         server_cmd,
@@ -176,7 +207,8 @@ def main(argv: Optional[List[str]] = None) -> int:
         for line in sys.stdin:
             if not line.strip():
                 continue
-            action, payload = gate_line(line, signed, trusted, args.server_name)
+            action, payload = gate_line(line, signed, trusted, args.server_name,
+                                        store=store, revocation_lists=revocation_lists)
             if action == FORWARD:
                 child.stdin.write(line)
                 child.stdin.flush()

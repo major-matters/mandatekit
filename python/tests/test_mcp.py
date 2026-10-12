@@ -7,11 +7,18 @@ tools/call gets denied or dropped, never forwarded.
 import json
 import unittest
 
-from mandatekit import build_mandate, generate_keypair, sign_mandate
+from mandatekit import (
+    InMemoryUsageStore,
+    build_mandate,
+    build_revocation_list,
+    generate_keypair,
+    sign_mandate,
+    sign_revocation_list,
+)
 from mandatekit.mcp import DROP, FORWARD, RESPOND, gate_line
 
 
-def make_signed(categories=None, merchants=None, max_amount=None):
+def make_signed(categories=None, merchants=None, max_amount=None, **extra):
     private_key, public_key = generate_keypair()
     mandate = build_mandate(
         agent_id="agent-under-test",
@@ -19,10 +26,11 @@ def make_signed(categories=None, merchants=None, max_amount=None):
         merchants=merchants,
         max_amount=max_amount,
         ttl_days=1,
+        **extra,
     )
     signed = sign_mandate(mandate, private_key)
     trusted = [signed["signature"]["public_key"]]
-    return signed, trusted, public_key
+    return signed, trusted, private_key
 
 
 def call(name, arguments=None, msg_id=7):
@@ -118,6 +126,34 @@ class TestGateLine(unittest.TestCase):
         action, payload = gate_line(call("delete_repo"), signed, trusted)
         self.assertEqual(action, RESPOND)
         self.assertIn("signature", payload["result"]["content"][0]["text"])
+
+    # --- 0.2 ---------------------------------------------------------------
+
+    def test_limits_hold_across_the_session_through_the_store(self):
+        signed, trusted, _ = make_signed(categories=["pay_invoice"], limits={"max_uses": 1})
+        # Without a store the mandate's limits cannot be enforced: deny, never forward.
+        action, payload = gate_line(call("pay_invoice"), signed, trusted)
+        self.assertEqual(action, RESPOND)
+        self.assertIn("no state store", payload["result"]["content"][0]["text"])
+        store = InMemoryUsageStore()
+        action, _ = gate_line(call("pay_invoice"), signed, trusted, store=store)
+        self.assertEqual(action, FORWARD)            # first use, recorded
+        action, payload = gate_line(call("pay_invoice", msg_id=8), signed, trusted, store=store)
+        self.assertEqual(action, RESPOND)            # second use exceeds max_uses 1
+        self.assertIn("max_uses", payload["result"]["content"][0]["text"])
+
+    def test_revocation_list_is_honored(self):
+        signed, trusted, private_key = make_signed(categories=["search_web"], revocation={"list_id": "rl-1"})
+        action, _ = gate_line(call("search_web"), signed, trusted)
+        self.assertEqual(action, RESPOND)            # declared list not supplied
+        clean = sign_revocation_list(build_revocation_list(list_id="rl-1", revoked=[]), private_key)
+        action, _ = gate_line(call("search_web"), signed, trusted, revocation_lists=[clean])
+        self.assertEqual(action, FORWARD)
+        revoked = sign_revocation_list(
+            build_revocation_list(list_id="rl-1", revoked=[signed["mandate"]["mandate_id"]]), private_key)
+        action, payload = gate_line(call("search_web"), signed, trusted, revocation_lists=[revoked])
+        self.assertEqual(action, RESPOND)
+        self.assertIn("revoked", payload["result"]["content"][0]["text"])
 
 
 if __name__ == "__main__":

@@ -201,7 +201,7 @@ def test_step_mandate_refuses_unscoped_target():
 def test_crosswalk_to_authorization_details():
     m = bank_mandate()
     (d,) = to_authorization_details(m)
-    assert d["type"] == "mandatekit:mandate:v0"
+    assert d["type"] == "mandatekit:mandate:v0.2"
     assert d["identifier"] == m["mandate_id"]
     assert d["actions"] == ["read", "draft", "submit", "pay", "cancel"]
     assert d["locations"] == ["MID-10231", "MID-10477", "MID-30905"]

@@ -46,12 +46,44 @@ and property-based testing:
 
 ## Known limitations (by design, v0)
 
-- **No replay / velocity / usage enforcement.** The verifier is stateless. These
-  require the roadmap registry. `max_uses` is omitted rather than ignored.
+- **Usage and velocity limits need a store you supply.** Since 0.2 a mandate
+  can declare `limits`; `verify()` denies such a mandate unless the caller
+  passes a store, and denies when the store fails or returns a malformed
+  record. The reference store is in memory, single process and per instance:
+  two processes each see only their own uses. A mandate with no `limits` has
+  no replay protection. A store that survives a restart is roadmap work.
+- **Revocation lists are checked, not fetched.** The verifier accepts a list
+  only from the mandate's own issuer or a pinned trusted key, and denies when
+  a declared list is missing, forged, altered or (with `max_age_seconds`)
+  stale. Getting a current list to the verifier is the integrator's job.
 - **Not independently audited.** Automated tooling and property tests are not a
   substitute for a third-party audit.
 - **Intent-basket alignment fails open** (a scorer error does not deny) by
   deliberate choice; integrators wanting fail-closed should enforce it themselves.
+
+## 0.2.0 (2026-10-12)
+
+New fail-closed paths, each covered by a test in both SDKs and by the shared
+`fixtures/verdict-matrix.json`:
+
+- **Field placement.** The 0.2 fields (`counterparties`, `not_before`,
+  `limits`, `revocation`, `delegation`) live under `constraints`, not beside
+  `issued_at`. A 0.1 verifier never reads the version field but does refuse
+  constraint keys it cannot enforce, so a 0.2 mandate fails closed on old code
+  instead of having its window start, limits, list or chain silently ignored.
+- **Wire version.** `mandatekit/v0.2`. Unknown versions deny; a `v0` mandate
+  that carries 0.2 keys denies as unenforceable under its version.
+- **Delegation.** The chain is walked to a root that must be signed by a
+  pinned key; each link must be signed by its parent's `subject.public_key`,
+  the parent must have opted in with `max_depth` to spare, and the child must
+  only narrow (effective per-counterparty verb scope, caps, categories,
+  windows, deny lists, approval rules still reachable). A parent travels
+  inside the child's signed bytes, so editing any link invalidates the leaf.
+  Chains over eight links are refused. Each link's revocation list and limits
+  apply.
+- **Hostile input.** Property tests in both languages fuzz the new keys, a
+  garbage parent chain, garbage revocation lists and garbage store records;
+  `verify()` returns a verdict in every case.
 
 ## Reporting
 

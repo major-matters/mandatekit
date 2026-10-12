@@ -19,7 +19,8 @@ from mandatekit import ed25519
 from mandatekit.canonical import canonicalize
 from mandatekit.mandate import build_mandate
 from mandatekit.signing import _b64, _public_from_seed, sign_mandate, verify_signature
-from mandatekit.verifier import verify
+from mandatekit.store import InMemoryUsageStore
+from mandatekit.verifier import record_use, verify
 
 NOW = datetime(2026, 1, 1, tzinfo=timezone.utc)
 FAR = datetime(2099, 1, 1, tzinfo=timezone.utc)
@@ -97,6 +98,57 @@ def test_verify_never_raises_on_garbage(mandate_like, txn_like):
                txn_like if isinstance(txn_like, dict) else {},
                now=NOW, trusted_keys=["AAAA"])
     assert v["decision"] in ("allow", "deny")
+
+
+NEW_KEYS = ["counterparties", "not_before", "limits", "revocation", "delegation", "version"]
+# Signable garbage: the same shapes as json_values with integers inside the
+# RFC 8785 safe range, since this test signs the mandate it fuzzes and the
+# canonicalizer (rightly) refuses integers it cannot encode identically.
+signable_values = st.recursive(
+    st.none() | st.booleans() | st.integers(min_value=-(2 ** 53 - 1), max_value=2 ** 53 - 1) | st.text(max_size=20),
+    lambda c: st.lists(c, max_size=5) | st.dictionaries(st.text(max_size=8), c, max_size=5),
+    max_leaves=40,
+)
+
+
+@settings(max_examples=200)
+@given(st.dictionaries(st.sampled_from(NEW_KEYS), signable_values, max_size=6), signable_values, signable_values)
+def test_verify_never_raises_on_hostile_02_fields(extra, txn_like, list_like):
+    # 0.2 keys (and a garbage parent chain) with a store and garbage revocation
+    # lists must produce a verdict, never an exception. Signed, so the only
+    # failures are the constraint checks themselves.
+    m = build_mandate(agent_id="a", categories=["apparel"],
+                      max_amount={"value": 1000, "currency": "USD"}, issued_at=NOW, expires_at=FAR)
+    m["constraints"].update({k: v for k, v in extra.items() if k != "version"})
+    if "version" in extra:
+        m["version"] = extra["version"]
+    if "delegation" in extra:
+        m["constraints"]["delegation"] = {"parent": {"mandate": extra["delegation"], "signature": txn_like}}
+    seed = bytes(range(32))
+    signed = sign_mandate(m, seed)
+    v = verify(signed, txn_like if isinstance(txn_like, dict) else {},
+               now=NOW, trusted_keys=[_b64(_public_from_seed(seed))],
+               store=InMemoryUsageStore(), revocation_lists=[list_like, {"list": list_like}])
+    assert v["decision"] in ("allow", "ask", "deny")
+    # Garbage in the store is a deny, not an exception, when limits are declared.
+    store = InMemoryUsageStore()
+    store.record(m["mandate_id"], txn_like if isinstance(txn_like, dict) else {"at": txn_like})
+    v2 = verify(signed, {}, now=NOW, trusted_keys=[_b64(_public_from_seed(seed))], store=store)
+    assert v2["decision"] in ("allow", "ask", "deny")
+
+
+@given(seeds, st.integers(min_value=0, max_value=20), st.integers(min_value=0, max_value=20))
+def test_max_uses_boundary(seed, recorded, max_uses):
+    # With `recorded` uses in the store, the next use is allowed iff recorded + 1 <= max_uses.
+    m = build_mandate(agent_id="a", categories=["apparel"], max_amount={"value": 100, "currency": "USD"},
+                      limits={"max_uses": max_uses}, issued_at=NOW, expires_at=FAR, mandate_id="m")
+    signed = sign_mandate(m, seed)
+    store = InMemoryUsageStore()
+    txn = {"merchant": "X", "category": "apparel", "amount": {"value": 1, "currency": "USD"}}
+    for _ in range(recorded):
+        record_use(signed, txn, store, now=NOW)
+    v = verify(signed, txn, now=NOW, trusted_keys=[_b64(_public_from_seed(seed))], store=store)
+    assert (v["decision"] == "allow") == (recorded + 1 <= max_uses)
 
 
 @given(seeds, st.text(max_size=30), st.text(max_size=30))
