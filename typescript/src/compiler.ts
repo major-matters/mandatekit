@@ -92,7 +92,9 @@ function parseCategories(text: string): string[] {
 function parseMerchants(text: string): { allow: string[]; deny: string[] } {
   const allow: string[] = [];
   const deny: string[] = [];
-  const m = text.match(new RegExp(`only (?:from|at)\\s{1,5}(${NAME}(?:(?:,|\\s{1,3}and)\\s{1,3}${NAME}){0,10})`));
+  // One level of repetition only: a capitalized word, then up to 20 more words each preceded by a
+  // short separator (space, comma, or "and"). Nesting NAME inside another repeat was quadratic.
+  const m = text.match(/only (?:from|at)\s{1,5}([A-Z][\w&.'-]{0,40}(?:[ ,]{1,3}(?:and ){0,1}[A-Z][\w&.'-]{0,40}){0,20})/);
   if (m) {
     for (const s of m[1].trim().split(/,\s*|\s+and\s+/)) {
       if (s.trim()) allow.push(s.trim());
