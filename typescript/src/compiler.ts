@@ -101,8 +101,14 @@ function parseMerchants(text: string): { allow: string[]; deny: string[] } {
       if (w === "" || w === "and" || /^[A-Z]/.test(w)) kept.push(w);
       else break;
     }
-    for (const s of kept.join(" ").trim().split(/,\s*|\s+and\s+/)) {
-      if (s.trim()) allow.push(s.trim());
+    // Plain string splits, no regex: commas and the word "and" separate names.
+    const joined = kept.filter((w) => w !== "").join(" ");
+    for (const part of joined.split(",")) {
+      for (const name of part.split(" and ")) {
+        let t = name.trim();
+        if (t.endsWith(" and")) t = t.slice(0, -4).trim();
+        if (t) allow.push(t);
+      }
     }
   }
   for (const dm of text.matchAll(new RegExp(`(?:not|never|except)\\s{1,5}(?:from|at)\\s{1,5}(${NAME})`, "g"))) {
