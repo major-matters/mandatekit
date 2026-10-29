@@ -9,6 +9,7 @@ on:
     branches: [main]
   schedule:
     - cron: "0 6 * * 1"
+  workflow_dispatch: {} # manual "Run workflow" button; the scheduled trigger alone gets disabled after 60 idle days
 
 jobs:
   analyze:
