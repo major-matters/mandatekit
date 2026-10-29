@@ -2,6 +2,18 @@
 
 Notable changes to this repository.
 
+## Unreleased
+
+TypeScript rule-based parser only; verdicts, envelopes and the Python package
+are unchanged, and the 149-case suite (including the shared verdict matrix)
+passes as before.
+
+- Every regex in `compiler.ts` that CodeQL flagged for polynomial backtracking
+  now uses bounded repetition: merchant names are one to six capitalized words
+  of up to 40 characters, whitespace runs are capped, amounts are at most 20
+  digits, and the intent phrase is at most 200 characters. Closes the five
+  open code-scanning warnings from June.
+
 ## 0.2.0 (2026-10-12)
 
 Per-verb counterparty scope, time windows, usage limits, revocation and

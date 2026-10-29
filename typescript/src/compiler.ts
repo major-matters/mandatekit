@@ -33,12 +33,13 @@ const MONTHS: Record<string, number> = {
   july: 7, august: 8, september: 9, october: 10, november: 11, december: 12,
 };
 
-// A merchant name is one or more consecutive Capitalized words ("Blue Bottle").
-const NAME = "[A-Z][\\w&.'-]*(?:\\s+[A-Z][\\w&.'-]*)*";
+// A merchant name is one to six consecutive Capitalized words ("Blue Bottle"), each up to 40
+// characters. The bounds keep every regex built from it linear in the input length.
+const NAME = "[A-Z][\\w&.'-]{0,40}(?:\\s{1,3}[A-Z][\\w&.'-]{0,40}){0,5}";
 
 function parseAmount(text: string): Amount | undefined {
   const m = text.match(
-    /(?:up to|under|max(?:imum)?(?: of)?|no more than|≤|<=|below)\s*([$£€])?\s*([\d,]+(?:\.\d{1,2})?)\s*([a-zA-Z]{3}|dollars?|pounds?|euros?)?/i,
+    /(?:up to|under|max(?:imum)?(?: of)?|no more than|≤|<=|below)\s{0,5}([$£€])?\s{0,5}([\d,]{1,20}(?:\.\d{1,2})?)\s{0,5}([a-zA-Z]{3}|dollars?|pounds?|euros?)?/i,
   );
   if (!m) return undefined;
   const [, symbol, number, word] = m;
@@ -50,13 +51,13 @@ function parseAmount(text: string): Amount | undefined {
 }
 
 function parseExpiry(text: string, now: Date): Date | undefined {
-  const isoM = text.match(/expir\w*\s+(?:on\s+|by\s+|at\s+)?(\d{4}-\d{2}-\d{2})/i);
+  const isoM = text.match(/expir\w{0,10}\s{1,5}(?:(?:on|by|at)\s{1,5})?(\d{4}-\d{2}-\d{2})/i);
   if (isoM) {
     const [y, mo, d] = isoM[1].split("-").map(Number);
     return new Date(Date.UTC(y, mo - 1, d, 23, 59, 59));
   }
   const m = text.match(
-    /expir\w*\s+(?:on\s+|by\s+|at\s+)?(?:(\d{1,2})\s+([A-Za-z]+)|([A-Za-z]+)\s+(\d{1,2}))/i,
+    /expir\w{0,10}\s{1,5}(?:(?:on|by|at)\s{1,5})?(?:(\d{1,2})\s{1,5}([A-Za-z]{1,12})|([A-Za-z]{1,12})\s{1,5}(\d{1,2}))/i,
   );
   if (m) {
     let day: number, monthName: string;
@@ -91,13 +92,13 @@ function parseCategories(text: string): string[] {
 function parseMerchants(text: string): { allow: string[]; deny: string[] } {
   const allow: string[] = [];
   const deny: string[] = [];
-  const m = text.match(new RegExp(`only (?:from|at)\\s+(${NAME}(?:(?:,|\\s+and)\\s+${NAME})*)`));
+  const m = text.match(new RegExp(`only (?:from|at)\\s{1,5}(${NAME}(?:(?:,|\\s{1,3}and)\\s{1,3}${NAME}){0,10})`));
   if (m) {
     for (const s of m[1].trim().split(/,\s*|\s+and\s+/)) {
       if (s.trim()) allow.push(s.trim());
     }
   }
-  for (const dm of text.matchAll(new RegExp(`(?:not|never|except)\\s+(?:from|at)\\s+(${NAME})`, "g"))) {
+  for (const dm of text.matchAll(new RegExp(`(?:not|never|except)\\s{1,5}(?:from|at)\\s{1,5}(${NAME})`, "g"))) {
     deny.push(dm[1].trim());
   }
   return { allow, deny };
@@ -105,7 +106,7 @@ function parseMerchants(text: string): { allow: string[]; deny: string[] } {
 
 function parseIntent(text: string): string | undefined {
   const m = text.match(
-    /\b(?:to\s+)?(buy|purchase|order|book|pay for|rent|subscribe to)\s+(.+?)(?:\s+from\b|\s+at\b|\s+up to\b|\s+under\b|\s+expir|,|\.|$)/i,
+    /\b(?:to\s{1,5})?(buy|purchase|order|book|pay for|rent|subscribe to)\s{1,5}(.{1,200}?)(?:\s{1,5}from\b|\s{1,5}at\b|\s{1,5}up to\b|\s{1,5}under\b|\s{1,5}expir|,|\.|$)/i,
   );
   if (m) return `${m[1].toLowerCase()} ${m[2].trim()}`.trim();
   return undefined;
