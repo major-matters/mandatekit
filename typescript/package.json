@@ -39,7 +39,7 @@
     "demo": "node --experimental-strip-types demo.ts"
   },
   "devDependencies": {
-    "@types/node": "^22",
+    "@types/node": "^26",
     "fast-check": "^4.8.0",
     "typescript": "^5.7"
   },
