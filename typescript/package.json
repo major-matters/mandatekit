@@ -44,6 +44,6 @@
     "typescript": "^5.7"
   },
   "dependencies": {
-    "canonicalize": "^3.0.0"
+    "canonicalize": "^5.1.0"
   }
 }
