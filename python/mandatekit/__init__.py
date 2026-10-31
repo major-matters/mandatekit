@@ -53,7 +53,7 @@ from .signing import (
 from .store import InMemoryUsageStore
 from .verifier import REASON_CODES, record_use, verify
 
-__version__ = "0.2.0"
+__version__ = "0.2.1"
 
 __all__ = [
     "compile",

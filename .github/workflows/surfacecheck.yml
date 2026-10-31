@@ -13,5 +13,5 @@ jobs:
   surface-check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: major-matters/mcp-surfacecheck@v1
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: major-matters/mcp-surfacecheck@0ede68fd90961ab9321db693ed1cb89dc4de641f # v1.1.1

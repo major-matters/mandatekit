@@ -77,9 +77,12 @@ _MONTHS = {
 
 
 def _parse_amount(text: str) -> Optional[Dict]:
+    # Bounded repetition throughout (mirrors compiler.ts), and the amount must start with a
+    # digit: "up to , 500" used to match "," alone, which crashed here (float("")) and gave
+    # the TypeScript port a zero cap (Number("")).
     m = re.search(
-        r"(?:up to|under|max(?:imum)?(?: of)?|no more than|≤|<=|below)\s*"
-        r"([$£€])?\s*([\d,]+(?:\.\d{1,2})?)\s*([a-zA-Z]{3}|dollars?|pounds?|euros?)?",
+        r"(?:up to|under|max(?:imum)?(?: of)?|no more than|≤|<=|below)\s{0,5}"
+        r"([$£€])?\s{0,5}(\d[\d,]{0,19}(?:\.\d{1,2})?)\s{0,5}([a-zA-Z]{3}|dollars?|pounds?|euros?)?",
         text,
         re.IGNORECASE,
     )
@@ -99,15 +102,18 @@ def _parse_amount(text: str) -> Optional[Dict]:
 
 def _parse_expiry(text: str, now: datetime) -> Optional[datetime]:
     m = re.search(
-        r"expir\w*\s+(?:on\s+|by\s+|at\s+)?([0-9]{4}-[0-9]{2}-[0-9]{2})", text, re.I
+        r"expir\w{0,10}\s{1,5}(?:(?:on|by|at)\s{1,5})?(\d{4}-\d{2}-\d{2})", text, re.I
     )
     if m:
-        d = datetime.fromisoformat(m.group(1)).replace(tzinfo=timezone.utc)
+        try:
+            d = datetime.fromisoformat(m.group(1)).replace(tzinfo=timezone.utc)
+        except ValueError:  # "2026-13-45": not a calendar date; no expiry rather than a crash
+            return None
         return d.replace(hour=23, minute=59, second=59)
 
     m = re.search(
-        r"expir\w*\s+(?:on\s+|by\s+|at\s+)?"
-        r"(?:(\d{1,2})\s+([A-Za-z]+)|([A-Za-z]+)\s+(\d{1,2}))",
+        r"expir\w{0,10}\s{1,5}(?:(?:on|by|at)\s{1,5})?"
+        r"(?:(\d{1,2})\s{1,5}([A-Za-z]{1,12})|([A-Za-z]{1,12})\s{1,5}(\d{1,2}))",
         text,
         re.I,
     )
@@ -119,9 +125,10 @@ def _parse_expiry(text: str, now: datetime) -> Optional[datetime]:
         month = _MONTHS.get(month_name.lower())
         if month:
             year = now.year
-            candidate = datetime(
-                year, month, day, 23, 59, 59, tzinfo=timezone.utc
-            )
+            try:
+                candidate = datetime(year, month, day, 23, 59, 59, tzinfo=timezone.utc)
+            except ValueError:  # "February 31"
+                return None
             if candidate < now:  # a bare month/day in the past means next year
                 candidate = candidate.replace(year=year + 1)
             return candidate
@@ -147,24 +154,42 @@ def _parse_categories(text: str):
     return normed
 
 
-# A merchant name is one or more consecutive Capitalized words ("Blue Bottle").
-_NAME = r"[A-Z][\w&.'-]*(?:\s+[A-Z][\w&.'-]*)*"
+# A merchant name is one to six consecutive Capitalized words ("Blue Bottle"), each up to 40
+# characters. The bounds keep every regex built from it linear in the input length
+# (same bounds as compiler.ts).
+_NAME = r"[A-Z][\w&.'-]{0,40}(?:\s{1,3}[A-Z][\w&.'-]{0,40}){0,5}"
 
 
 def _parse_merchants(text: str):
     allow, deny = [], []
-    m = re.search(rf"only (?:from|at)\s+({_NAME}(?:(?:,|\s+and)\s+{_NAME})*)", text)
+    # No repeated groups: capture one bounded run of name characters, then walk it in code. The
+    # run ends at the first lowercase word that is not "and" (for example "up", "under", "expiring").
+    m = re.search(r"only (?:from|at)\s{1,5}([A-Z][\w&.,' -]{0,200})", text)
     if m:
-        allow = [s.strip() for s in re.split(r",\s*|\s+and\s+", m.group(1).strip()) if s.strip()]
-    for m in re.finditer(rf"(?:not|never|except)\s+(?:from|at)\s+({_NAME})", text):
-        deny.append(m.group(1).strip())
+        kept = []
+        for w in m.group(1).split(" "):
+            if w == "" or w == "and" or re.match(r"[A-Z]", w):
+                kept.append(w)
+            else:
+                break
+        # Plain string splits, no regex: commas and the word "and" separate names.
+        joined = " ".join(w for w in kept if w != "")
+        for part in joined.split(","):
+            for name in part.split(" and "):
+                t = name.strip()
+                if t.endswith(" and"):
+                    t = t[:-4].strip()
+                if t:
+                    allow.append(t)
+    for dm in re.finditer(rf"(?:not|never|except)\s{{1,5}}(?:from|at)\s{{1,5}}({_NAME})", text):
+        deny.append(dm.group(1).strip())
     return {"allow": allow, "deny": deny}
 
 
 def _parse_intent(text: str) -> Optional[str]:
     m = re.search(
-        r"\b(?:to\s+)?(buy|purchase|order|book|pay for|rent|subscribe to)\s+"
-        r"(.+?)(?:\s+from\b|\s+at\b|\s+up to\b|\s+under\b|\s+expir|,|\.|$)",
+        r"\b(?:to\s{1,5})?(buy|purchase|order|book|pay for|rent|subscribe to)\s{1,5}"
+        r"(.{1,200}?)(?:\s{1,5}from\b|\s{1,5}at\b|\s{1,5}up to\b|\s{1,5}under\b|\s{1,5}expir|,|\.|$)",
         text,
         re.I,
     )

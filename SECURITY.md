@@ -85,9 +85,20 @@ New fail-closed paths, each covered by a test in both SDKs and by the shared
   garbage parent chain, garbage revocation lists and garbage store records;
   `verify()` returns a verdict in every case.
 
-## Reporting
+## Reporting a vulnerability
 
 This is a pre-release v0 prototype. Do not use it to authorize real funds.
+
+Please report vulnerabilities privately via GitHub's private vulnerability
+reporting on this repository (Security tab -> Report a vulnerability). It is
+enabled and monitored.
+
+We follow the same standard we ask of others: acknowledgment within 7 days, a
+fix or a plan within 45, and credit to reporters who want it. Our coordinated
+disclosure process for the wider MCP ecosystem is described at
+https://majorlabs.co/security.
+
+Please do not open public issues for security reports.
 
 ## Audit status (v0)
 
@@ -95,7 +106,7 @@ This is a v0 release. It has been independently hardened — CodeQL, bandit, sem
 
 ## Security review welcome
 
-We actively want researcher eyes on this. If you find a fail-open, a signature bypass, an SSRF path, or any way to defeat a guarantee in this document, please open an issue. Credit given. The shared crypto core (Ed25519 + RFC 8785 canonicalization) and the verifier's fail-closed paths are the highest-value targets.
+We actively want researcher eyes on this. If you find a fail-open, a signature bypass, an SSRF path, or any way to defeat a guarantee in this document, please report it privately (see above). Credit given. The shared crypto core (Ed25519 + RFC 8785 canonicalization) and the verifier's fail-closed paths are the highest-value targets.
 
 ## v0.0.2 hardening (2026-06-10 internal audit)
 

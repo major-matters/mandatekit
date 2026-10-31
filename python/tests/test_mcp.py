@@ -15,7 +15,7 @@ from mandatekit import (
     sign_mandate,
     sign_revocation_list,
 )
-from mandatekit.mcp import DROP, FORWARD, RESPOND, gate_line
+from mandatekit.mcp import DROP, FORWARD, MAX_LINE_CHARS, RESPOND, gate_line
 
 
 def make_signed(categories=None, merchants=None, max_amount=None, **extra):
@@ -154,6 +154,32 @@ class TestGateLine(unittest.TestCase):
         action, payload = gate_line(call("search_web"), signed, trusted, revocation_lists=[revoked])
         self.assertEqual(action, RESPOND)
         self.assertIn("revoked", payload["result"]["content"][0]["text"])
+
+
+class HostileFrames(unittest.TestCase):
+    """Audit 2026-10-31 (L9): frames built to exhaust the parser are dropped, never crash."""
+
+    def test_oversized_frame_is_dropped_unparsed(self):
+        signed, trusted, _ = make_signed(categories=["search"])
+        line = call("search", {"pad": "x" * MAX_LINE_CHARS})
+        self.assertGreater(len(line), MAX_LINE_CHARS)
+        action, payload = gate_line(line, signed, trusted)
+        self.assertEqual(action, DROP)
+        self.assertIsNone(payload)
+
+    def test_deeply_nested_frame_is_dropped_not_crashed(self):
+        signed, trusted, _ = make_signed(categories=["search"])
+        line = "[" * 200_000 + "]" * 200_000  # json.loads raises RecursionError on this
+        action, payload = gate_line(line, signed, trusted)
+        self.assertEqual(action, DROP)
+        self.assertIsNone(payload)
+
+    def test_frame_at_the_limit_is_still_gated_normally(self):
+        signed, trusted, _ = make_signed(categories=["search"])
+        line = call("search", {"pad": "x" * (MAX_LINE_CHARS - 200)})
+        self.assertLessEqual(len(line), MAX_LINE_CHARS)
+        action, _ = gate_line(line, signed, trusted)
+        self.assertEqual(action, FORWARD)
 
 
 if __name__ == "__main__":

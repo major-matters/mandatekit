@@ -38,8 +38,10 @@ const MONTHS: Record<string, number> = {
 const NAME = "[A-Z][\\w&.'-]{0,40}(?:\\s{1,3}[A-Z][\\w&.'-]{0,40}){0,5}";
 
 function parseAmount(text: string): Amount | undefined {
+  // The amount must start with a digit: "up to , 500" used to match "," alone, which gave a
+  // zero cap here (Number("") is 0) and crashed the Python port (float("")).
   const m = text.match(
-    /(?:up to|under|max(?:imum)?(?: of)?|no more than|≤|<=|below)\s{0,5}([$£€])?\s{0,5}([\d,]{1,20}(?:\.\d{1,2})?)\s{0,5}([a-zA-Z]{3}|dollars?|pounds?|euros?)?/i,
+    /(?:up to|under|max(?:imum)?(?: of)?|no more than|≤|<=|below)\s{0,5}([$£€])?\s{0,5}(\d[\d,]{0,19}(?:\.\d{1,2})?)\s{0,5}([a-zA-Z]{3}|dollars?|pounds?|euros?)?/i,
   );
   if (!m) return undefined;
   const [, symbol, number, word] = m;
@@ -54,7 +56,10 @@ function parseExpiry(text: string, now: Date): Date | undefined {
   const isoM = text.match(/expir\w{0,10}\s{1,5}(?:(?:on|by|at)\s{1,5})?(\d{4}-\d{2}-\d{2})/i);
   if (isoM) {
     const [y, mo, d] = isoM[1].split("-").map(Number);
-    return new Date(Date.UTC(y, mo - 1, d, 23, 59, 59));
+    const date = new Date(Date.UTC(y, mo - 1, d, 23, 59, 59));
+    // "2026-13-45" is not a calendar date: no expiry (as in Python) rather than a rolled-over one.
+    if (date.getUTCFullYear() !== y || date.getUTCMonth() !== mo - 1 || date.getUTCDate() !== d) return undefined;
+    return date;
   }
   const m = text.match(
     /expir\w{0,10}\s{1,5}(?:(?:on|by|at)\s{1,5})?(?:(\d{1,2})\s{1,5}([A-Za-z]{1,12})|([A-Za-z]{1,12})\s{1,5}(\d{1,2}))/i,
@@ -67,6 +72,7 @@ function parseExpiry(text: string, now: Date): Date | undefined {
     if (month) {
       let year = now.getUTCFullYear();
       let candidate = new Date(Date.UTC(year, month - 1, day, 23, 59, 59));
+      if (candidate.getUTCDate() !== day) return undefined; // "February 31"
       if (candidate < now) candidate = new Date(Date.UTC(year + 1, month - 1, day, 23, 59, 59));
       return candidate;
     }

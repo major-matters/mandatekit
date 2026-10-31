@@ -54,6 +54,7 @@ cannot enforce, so a 0.2 mandate fails closed on old code instead of having its
 window start, usage limits, revocation list or delegation chain ignored.
 """
 
+import re
 import base64
 import uuid
 from datetime import datetime, timedelta, timezone
@@ -98,11 +99,28 @@ def iso(dt: datetime) -> str:
     )
 
 
+# The grammar the TypeScript verifier accepts (verifier.ts, ISO_8601): a full date-time with
+# seconds, an optional fraction and an optional Z or +-HH:MM offset. Python's fromisoformat
+# is looser (a bare date, no seconds, 3.11 accepts more still), so it is gated behind this.
+_ISO_8601 = re.compile(
+    r"(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2}):(\d{2})(\.\d+)?(Z|[+-]\d{2}:\d{2})?"
+)
+
+
 def parse_iso(s: str) -> datetime:
-    dt = datetime.fromisoformat(s.replace("Z", "+00:00"))
-    if dt.tzinfo is None:
-        dt = dt.replace(tzinfo=timezone.utc)
-    return dt
+    """Strict ISO-8601 instant: YYYY-MM-DD[T ]HH:MM:SS[.frac][Z|+-HH:MM].
+
+    Same grammar as the TypeScript verifier's parser, so both SDKs accept and reject
+    the same strings. A naive timestamp is UTC. Raises ValueError otherwise."""
+    if not isinstance(s, str):
+        raise ValueError(f"timestamp must be a string, not {type(s).__name__}")
+    m = _ISO_8601.fullmatch(s)
+    if not m:
+        raise ValueError(f"not an ISO-8601 date-time: {s!r}")
+    year, month, day, hh, mm, ss, frac, offset = m.groups()
+    micro = f".{frac[1:7].ljust(6, '0')}" if frac else ""  # 3.9 wants 3 or 6 digits
+    tz = "+00:00" if offset in (None, "Z") else offset
+    return datetime.fromisoformat(f"{year}-{month}-{day}T{hh}:{mm}:{ss}{micro}{tz}")
 
 
 def _is_int(v) -> bool:

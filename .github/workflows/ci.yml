@@ -1,11 +1,19 @@
-# CI for MandateKit. Lives under mandatekit/ so it sits at the repo root once the
-# package is extracted into its own public repository.
+# CI for MandateKit. Every action is pinned to a commit SHA (the tag it was taken from
+# is in the comment) and the workflow holds read-only permissions; Dependabot keeps
+# the pins current. Every file under python/tests runs through pytest, so a new test
+# file cannot be left out of CI by accident.
 name: CI
 
 on:
   push:
     branches: [main]
   pull_request:
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
 jobs:
   python:
@@ -15,28 +23,16 @@ jobs:
       matrix:
         python-version: ["3.9", "3.11", "3.12"]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install deps (vetted crypto + JCS + test/lint tools)
         working-directory: python
-        run: pip install cryptography rfc8785 hypothesis bandit
-      - name: Unit tests
+        run: pip install cryptography rfc8785 hypothesis bandit pytest
+      - name: Tests (every file under tests/, unit + property)
         working-directory: python
-        run: PYTHONPATH=. python tests/test_mandatekit.py
-      - name: Step-up tests (0.1)
-        working-directory: python
-        run: PYTHONPATH=. python tests/test_stepup.py
-      - name: Scope, windows, limits, revocation, delegation (0.2) + shared fixture
-        working-directory: python
-        run: PYTHONPATH=. python tests/test_v02.py
-      - name: MCP proxy tests
-        working-directory: python
-        run: PYTHONPATH=. python -m unittest tests.test_mcp
-      - name: Property tests (Hypothesis)
-        working-directory: python
-        run: PYTHONPATH=. python tests/test_properties.py
+        run: PYTHONPATH=. python -m pytest -q tests
       - name: Bandit (security lint)
         working-directory: python
         run: bandit -r mandatekit -ll
@@ -45,25 +41,28 @@ jobs:
     name: Python (dependency-free fallback)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version: "3.12"
-      - name: Unit tests with NO optional deps (pure-Python Ed25519 + sorted-JSON fallback)
+      - name: Install test tools only (no cryptography, no rfc8785)
         working-directory: python
-        run: PYTHONPATH=. python tests/test_mandatekit.py && PYTHONPATH=. python tests/test_stepup.py && PYTHONPATH=. python tests/test_v02.py
+        run: pip install hypothesis pytest
+      - name: Tests with NO optional deps (pure-Python Ed25519 + sorted-JSON fallback)
+        working-directory: python
+        run: PYTHONPATH=. python -m pytest -q tests
 
   typescript:
     name: TypeScript (Node 22)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: "22"
-      - name: Install
+      - name: Install (exactly the lockfile)
         working-directory: typescript
-        run: npm install --no-audit --no-fund
+        run: npm ci --no-audit --no-fund
       - name: Build (type-check + emit dist + types)
         working-directory: typescript
         run: npm run build
@@ -71,12 +70,28 @@ jobs:
         working-directory: typescript
         run: npm test
 
+  shared-core-digests:
+    name: Shared crypto core is byte-identical
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - name: Pinned SHA-256 of ed25519.py, canonical.py and canonical.ts
+        # These three files are the same bytes in IdentityKit, MandateKit, WitnessKit and
+        # RememberKit. A change to any of them must be deliberate: update the file in all
+        # four repositories and the digests here in the same change.
+        run: |
+          shasum -a 256 -c - <<'EOF'
+          53c7828a743f75218f5b36144176152b2cce463a6ca0788f75c5bf229c25b82d  python/mandatekit/ed25519.py
+          789194b8848004307908e2fcbac2b886ce7879d047c2dd09a141badc9c0f2a71  python/mandatekit/canonical.py
+          4c415ec44db85d07315ac430de1bf49b31e35968195326ef629aa26c792f7bae  typescript/src/canonical.ts
+          EOF
+
   semgrep:
     name: Semgrep (SAST)
     runs-on: ubuntu-latest
     container:
-      image: semgrep/semgrep
+      image: semgrep/semgrep:1.183.0
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - name: Semgrep scan
         run: semgrep scan --config p/python --config p/typescript --config p/secrets --error

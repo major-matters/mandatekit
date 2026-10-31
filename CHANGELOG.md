@@ -2,18 +2,40 @@
 
 Notable changes to this repository.
 
-## Unreleased
+## 0.2.1 (2026-10-31)
 
-TypeScript rule-based parser only; verdicts, envelopes and the Python package
-are unchanged, and the 149-case suite (including the shared verdict matrix)
-passes as before.
+Both packages. Verdicts and envelopes are unchanged for every well-formed
+mandate; the shared verdict matrix grows by four expiry cases, ten compiler
+cases and twelve ISO-8601 cases, and both suites replay all of them.
 
-- Every regex in `compiler.ts` that CodeQL flagged for polynomial backtracking
-  now uses bounded repetition: merchant names are one to six capitalized words
-  of up to 40 characters, whitespace runs are capped, amounts are at most 20
-  digits, and the intent phrase is at most 200 characters; the "only from"
-  merchant list is matched with a single level of repetition. Closes the five
-  open code-scanning warnings from June.
+- Rule-based compiler, both ports: every regex uses bounded repetition
+  (merchant names are one to six capitalized words of up to 40 characters,
+  whitespace runs are capped, amounts are at most 20 digits, the intent phrase
+  at most 200 characters, and the "only from" merchant list is captured once
+  and walked in code). The TypeScript bounds landed on 2026-10-29 and closed
+  five code-scanning warnings; the Python port now has the same ones. An amount
+  must start with a digit, so "up to , 500" is no amount at all (it crashed the
+  Python parser and gave the TypeScript parser a zero cap). An ISO-looking
+  expiry that is not a calendar date ("2026-13-45") means no expiry in both
+  ports (Python raised, TypeScript rolled the date over).
+- `parse_iso` (Python) now applies the same strict ISO-8601 grammar as the
+  TypeScript verifier before parsing: a full date-time with seconds, optional
+  fraction, optional `Z` or `+-HH:MM`. A bare date or a prose date is rejected,
+  as it already was in TypeScript, so a mandate with `expires_at: "2026-10-19"`
+  is denied (`not_expired`) in both SDKs instead of being read as midnight by
+  Python alone.
+- `mandatekit-mcp`: a frame longer than 1 MiB is dropped unparsed, and a frame
+  that makes the JSON parser raise `RecursionError` or `MemoryError` is dropped
+  too; both are logged to stderr. Nothing is forwarded on either path.
+- `python/LICENSE` is in the package directory, so sdists and wheels carry it.
+- Shared Ed25519 reference file: the docstring is generic (the same bytes serve
+  all four signing kits); CI pins the SHA-256 of `ed25519.py`, `canonical.py`
+  and `canonical.ts`.
+- Repository: CI runs every file under `python/tests` through pytest, installs
+  with `npm ci`, pins every action to a commit SHA, declares read-only
+  permissions and pins the Semgrep image; Dependabot for npm, pip and Actions;
+  a tag-driven Release workflow with Trusted Publishing; SECURITY.md points to
+  private vulnerability reporting; CITATION.cff carries the version.
 
 ## 0.2.0 (2026-10-12)
 

@@ -181,7 +181,7 @@ const ISO_8601 = /^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2}):(\d{2})(\.\d+)?(Z|
 /** Strict ISO-8601 instant parser mirroring Python's parse_iso. Returns epoch
  *  milliseconds, or NaN if the string is not a valid ISO-8601 date-time. A naive
  *  timestamp (no offset) is treated as UTC, matching the Python SDK. */
-function parseIsoStrict(s: unknown): number {
+export function parseIsoStrict(s: unknown): number {
   if (typeof s !== "string") return NaN;
   const m = ISO_8601.exec(s);
   if (!m) return NaN;

@@ -1,7 +1,8 @@
 """
-Pure-Python Ed25519 (RFC 8032), zero dependencies.
+Shared Ed25519 reference implementation for the Major Labs kits (RFC 8032),
+zero dependencies.
 
-This is the well-known slow reference implementation. It is here so MandateKit
+This is the well-known slow reference implementation. It is here so each kit
 signs and verifies with no third-party crypto dependency: the user's signing key
 never has to leave the device, and there is nothing to `pip install` to try it.
 
@@ -10,8 +11,9 @@ produced here verify against any conforming Ed25519 implementation, including th
 TypeScript port (which uses Node's built-in crypto).
 
 For production you would swap this for libsodium / `cryptography`. The signing and
-verifying surface in `signing.py` is the only thing the rest of MandateKit touches,
-so that swap is a one-file change.
+verifying surface in `signing.py` is the only thing the rest of each kit touches,
+so that swap is a one-file change. This file is byte-identical across IdentityKit,
+MandateKit, WitnessKit and RememberKit; CI pins its SHA-256.
 """
 
 import hashlib

@@ -93,7 +93,7 @@ def raises(exc, fn, *a, **kw):
 # --- versions, builders, validation -----------------------------------------------
 
 def test_versions_are_aligned():
-    assert mandatekit.__version__ == "0.2.0"
+    assert mandatekit.__version__ == "0.2.1"
     assert VERSION == "mandatekit/v0.2"
     assert SUPPORTED_VERSIONS == ("mandatekit/v0", "mandatekit/v0.2")
     assert MANDATE_SCHEMA["properties"]["version"]["enum"] == ["mandatekit/v0", "mandatekit/v0.2"]
@@ -534,6 +534,38 @@ def test_cross_language_fixture():
                 raise AssertionError(f"{where}: unknown op {step['op']!r}")
     assert verdicts >= 100, f"only {verdicts} fixture verdicts ran"
     assert emitted <= set(REASON_CODES), emitted - set(REASON_CODES)
+
+
+def test_parser_fixture():
+    """Both rule-based compilers parse the fixture's text identically (audit 2026-10-31, M3)."""
+    from mandatekit.compiler import rule_based_parser
+    from mandatekit.mandate import iso
+    with open(FIXTURE) as fh:
+        fixture = json.load(fh)
+    now = datetime.fromisoformat(fixture["now"].replace("Z", "+00:00"))
+    assert fixture["parser_cases"], "fixture has no parser cases"
+    for c in fixture["parser_cases"]:
+        got = rule_based_parser(c["text"], now=now)
+        if "expires_at" in got:
+            got["expires_at"] = iso(got["expires_at"])
+        assert got == c["expect"], f"{c['name']}: {got} != {c['expect']}"
+
+
+def test_iso_fixture():
+    """parse_iso accepts and rejects exactly the strings the TypeScript verifier does (L4)."""
+    from mandatekit.mandate import iso, parse_iso
+    with open(FIXTURE) as fh:
+        fixture = json.load(fh)
+    assert fixture["iso_cases"], "fixture has no ISO cases"
+    for c in fixture["iso_cases"]:
+        if c["valid"]:
+            assert iso(parse_iso(c["input"])) == c["normalized"], c["input"]
+        else:
+            try:
+                parse_iso(c["input"])
+            except ValueError:
+                continue
+            raise AssertionError(f"parse_iso accepted {c['input']!r}")
 
 
 # --- standalone runner ------------------------------------------------------------------------------

@@ -53,4 +53,4 @@ export type { AuthorizationDetail } from "./crosswalk.ts";
 export { InMemoryUsageStore } from "./store.ts";
 export type { UsageStore, Use } from "./store.ts";
 
-export const __version__ = "0.2.0";
+export const __version__ = "0.2.1";

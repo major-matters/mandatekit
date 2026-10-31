@@ -1,5 +1,5 @@
 {
- "description": "MandateKit 0.2 verdict matrix. Both test suites (python/tests/test_v02.py and typescript/test/v02.test.ts) replay every case: build a fresh in-memory store when `store` is true, pin the named trusted keys, supply the listed revocation lists, run the steps in order, and compare the decision and the sorted reason codes in `failed` (and `signature_valid` where given). Envelopes were signed by the Python SDK; the TypeScript suite re-signs each one with the same seed and checks the bytes match. Every step carries an explicit `now` or uses the fixture's; nothing depends on a wall clock. Seeds are test values, never real keys.",
+ "description": "MandateKit 0.2 verdict matrix. Both test suites (python/tests/test_v02.py and typescript/test/v02.test.ts) replay every case: build a fresh in-memory store when `store` is true, pin the named trusted keys, supply the listed revocation lists, run the steps in order, and compare the decision and the sorted reason codes in `failed` (and `signature_valid` where given). Envelopes were signed by the Python SDK; the TypeScript suite re-signs each one with the same seed and checks the bytes match. Every step carries an explicit `now` or uses the fixture's; nothing depends on a wall clock. Seeds are test values, never real keys. `parser_cases` replay the rule-based compiler on the same text (expires_at as an ISO string, resolved against `now`) and `iso_cases` list the ISO-8601 strings both verifiers accept (with the normalized instant) or reject.",
  "generated_by": "fixtures/generate_verdict_matrix.py",
  "now": "2026-10-12T12:00:00Z",
  "seeds": {
@@ -3937,7 +3937,7 @@
      "subject": {
       "agent_id": "sub-agent"
      },
-     "issued_at": "2026-10-12T19:27:38Z",
+     "issued_at": "2026-10-11T12:00:00Z",
      "expires_at": "2026-10-19T12:00:00Z",
      "constraints": {
       "intent": "pay the energy bill",
@@ -4036,7 +4036,7 @@
     "signature": {
      "alg": "Ed25519",
      "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc=",
-     "value": "LvB1IbtvVgGdvQOzwtU/JiN8E0p8ekfDWjvOgKXwW76RVrLiK/Ig2W/QN1jgwaNy+KLGUqUAFOloqriQwj/RAg=="
+     "value": "nplGwApIHeJjsnzSAkyRdefKocuD+dlIT9oN7FpRcXoF7GuPAHGffmq7NfS5fA7sDEqnP6Q3iYJIznApgENoCw=="
     }
    },
    "trusted": [
@@ -4237,7 +4237,7 @@
      "subject": {
       "agent_id": "sub-agent"
      },
-     "issued_at": "2026-10-12T19:27:38Z",
+     "issued_at": "2026-10-11T12:00:00Z",
      "expires_at": "2026-10-19T12:00:00Z",
      "constraints": {
       "intent": "pay the energy bill",
@@ -4316,7 +4316,7 @@
     "signature": {
      "alg": "Ed25519",
      "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc=",
-     "value": "oPI7XHkDcJTs7yxIS4sBKkfQOImqtOG2+VFp4mUopJAfxyuDnB+xErKWLexq596/qtKzWzipFfSwwaPXOdQ9DQ=="
+     "value": "6xigvwAkeASFNZQbjKgcq0a+gghZB0npP6tiLF9YDfcimX6LuRW3orUOxG3Wybw3H1OXK674/CbphjEu9Jf4CQ=="
     }
    },
    "trusted": [
@@ -5240,7 +5240,7 @@
       "agent_id": "sub-agent",
       "public_key": "JUO5L/EJVRFHatyDadtt3JM2ZaEZeN2hQE7hBmypVZ0="
      },
-     "issued_at": "2026-10-12T19:27:38Z",
+     "issued_at": "2026-10-11T12:00:00Z",
      "expires_at": "2026-10-19T12:00:00Z",
      "constraints": {
       "intent": "pay the energy bill",
@@ -5324,7 +5324,7 @@
     "signature": {
      "alg": "Ed25519",
      "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc=",
-     "value": "HIG2vkR79CnxJkPGhwRLDa/PInKTwDDnk+8JZHp320dtucCNF904nGmMOilkJ4T7yLuINbTUZAk3HtiL9IfnCg=="
+     "value": "aOFfw5MBg7ZLfwtXk9iFdY1UwzznvcV5DcenSPSBAsHrlQFQ7OUVu5562PxOySNUDmhKB0b8HQoZFA0WXiaXCA=="
     }
    },
    "trusted": [
@@ -6137,7 +6137,7 @@
      "subject": {
       "agent_id": "grand"
      },
-     "issued_at": "2026-10-12T19:27:38Z",
+     "issued_at": "2026-10-11T12:00:00Z",
      "expires_at": "2026-10-13T12:00:00Z",
      "constraints": {
       "intent": "pay the energy bill",
@@ -6262,7 +6262,7 @@
     "signature": {
      "alg": "Ed25519",
      "public_key": "JUO5L/EJVRFHatyDadtt3JM2ZaEZeN2hQE7hBmypVZ0=",
-     "value": "O7vqaUdpkAFPDJEMM6OKHg19o++xMmb0fRbhAtyw6DxzuedGYDDFNA5K8fE5KwBY/cz9Vr5a0gZgQkb2yarADQ=="
+     "value": "DtLH+mvGfHQ9hit08OEozUW4JhvqNifdeXtc1WETTghxfvCBeo/IbtsDn9TDxI0iBLZWpg3aAtuPuaqP21veBw=="
     }
    },
    "trusted": [
@@ -6391,7 +6391,7 @@
      "subject": {
       "agent_id": "sub-agent"
      },
-     "issued_at": "2026-10-12T19:27:38Z",
+     "issued_at": "2026-10-11T12:00:00Z",
      "expires_at": "2026-10-19T12:00:00Z",
      "constraints": {
       "intent": "pay the energy bill",
@@ -6491,7 +6491,7 @@
     "signature": {
      "alg": "Ed25519",
      "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc=",
-     "value": "YtX4Hc+S1xJsEEK4UJe963Dp2u8xhOXpnjSSY/ZB6oGgjEW0SuSbvskZjssfMn4l4uFXVQqpzYfpcOof37PaBw=="
+     "value": "OCWB+A6m1S+JQ3T1MKUufBkPrM2DMhnFmmsD9AQz13Qp0oKbItPwVOluTYuPIYCn5+TXrvG84XAAurxQ43q0Dg=="
     }
    },
    "trusted": [
@@ -7598,7 +7598,7 @@
      "subject": {
       "agent_id": "leaf-agent"
      },
-     "issued_at": "2026-10-12T19:27:38Z",
+     "issued_at": "2026-10-11T12:00:00Z",
      "expires_at": "2026-10-19T12:00:00Z",
      "constraints": {
       "intent": "pay the energy bill",
@@ -7628,7 +7628,7 @@
           "agent_id": "mid-agent",
           "public_key": "JUO5L/EJVRFHatyDadtt3JM2ZaEZeN2hQE7hBmypVZ0="
          },
-         "issued_at": "2026-10-12T19:27:38Z",
+         "issued_at": "2026-10-11T12:00:00Z",
          "expires_at": "2026-10-19T12:00:00Z",
          "constraints": {
           "intent": "pay the energy bill",
@@ -7714,7 +7714,7 @@
         "signature": {
          "alg": "Ed25519",
          "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc=",
-         "value": "Aj4IL6SoSIg3ofdiBRjfw7MWvKJDJ8wCpJ38D4ieedPQaUJA7iUSSnYWet9A//ZdICxMZ/oRDF0NhtrZlWdqAQ=="
+         "value": "95ru3HeolK+Qx2ldsptVwb2FtvRfMfpVTGMWAA8Mij9hA8QDqap9gpUWGf5pVdqlkbzTuqD8Gf6/eIFzKyKrAA=="
         }
        }
       }
@@ -7723,7 +7723,7 @@
     "signature": {
      "alg": "Ed25519",
      "public_key": "JUO5L/EJVRFHatyDadtt3JM2ZaEZeN2hQE7hBmypVZ0=",
-     "value": "9RBahpLMgz2MhqasA/abGxXtGlcVmScrJBIOZLRvxST3+vQmSsCY6/6PlNgceht4h6Xqwm2KRtKywHvspgTRDA=="
+     "value": "JBShBu+QTy4ahwC3Bj/kl99xtp+KcvFMQqExr7C0C4bVVqtjVH8wP9oWLMaar7HwFbiFokO3vJHIuoa8GJi0Bw=="
     }
    },
    "trusted": [
@@ -7781,7 +7781,7 @@
      "subject": {
       "agent_id": "leaf-agent"
      },
-     "issued_at": "2026-10-12T19:27:38Z",
+     "issued_at": "2026-10-11T12:00:00Z",
      "expires_at": "2026-10-19T12:00:00Z",
      "constraints": {
       "intent": "pay the energy bill",
@@ -7815,7 +7815,7 @@
           "agent_id": "mid-agent",
           "public_key": "JUO5L/EJVRFHatyDadtt3JM2ZaEZeN2hQE7hBmypVZ0="
          },
-         "issued_at": "2026-10-12T19:27:38Z",
+         "issued_at": "2026-10-11T12:00:00Z",
          "expires_at": "2026-10-19T12:00:00Z",
          "constraints": {
           "intent": "pay the energy bill",
@@ -7901,7 +7901,7 @@
         "signature": {
          "alg": "Ed25519",
          "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc=",
-         "value": "Aj4IL6SoSIg3ofdiBRjfw7MWvKJDJ8wCpJ38D4ieedPQaUJA7iUSSnYWet9A//ZdICxMZ/oRDF0NhtrZlWdqAQ=="
+         "value": "95ru3HeolK+Qx2ldsptVwb2FtvRfMfpVTGMWAA8Mij9hA8QDqap9gpUWGf5pVdqlkbzTuqD8Gf6/eIFzKyKrAA=="
         }
        }
       }
@@ -7910,7 +7910,7 @@
     "signature": {
      "alg": "Ed25519",
      "public_key": "JUO5L/EJVRFHatyDadtt3JM2ZaEZeN2hQE7hBmypVZ0=",
-     "value": "i1Vzmo6rTQ/gHTBhJiZJMGFO3EuqHNC6Bc1nJvhHItZ5dhUNHE0FsWFCulqgGZhMKkmd5+HPjVgJtJr8D2ocAQ=="
+     "value": "U6NluSIVoyctF1cQoPEB8Gv7zk8J11R+GLmIldndiF0cP4sDK9Rm2m2lxjmuNEzhrEcHcEg0p3o8eaDdSHjOAw=="
     }
    },
    "trusted": [
@@ -8236,6 +8236,513 @@
      }
     }
    ]
+  },
+  {
+   "name": "expiry: a date-only expires_at is not an instant and denies in both languages",
+   "signer": "issuer",
+   "mandate": {
+    "mandate": {
+     "version": "mandatekit/v0.2",
+     "spec": "AP2-draft-2026Q2",
+     "mandate_id": "m-expiry-1",
+     "subject": {
+      "agent_id": "agent-tidy",
+      "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc="
+     },
+     "issued_at": "2026-10-11T12:00:00Z",
+     "expires_at": "2026-10-19",
+     "constraints": {
+      "intent": "pay the energy bill",
+      "categories": [
+       "bank",
+       "4900"
+      ],
+      "counterparties": {
+       "harbourline": [
+        "read",
+        "submit",
+        "transfer"
+       ],
+       "MID-10231": [
+        "read",
+        "draft",
+        "pay"
+       ]
+      },
+      "max_amount": {
+       "value": 15000,
+       "currency": "GBP"
+      },
+      "actions": [
+       "read",
+       "draft",
+       "submit",
+       "pay",
+       "transfer"
+      ],
+      "approval": {
+       "actions": [
+        "submit"
+       ]
+      }
+     }
+    },
+    "signature": {
+     "alg": "Ed25519",
+     "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+     "value": "86e+PdWiWIdN0NwQseulffUKlpLB4BaIKFxvSwkT2fL5XUkar/dF53tVovnPdH14rEFnz2GC9HnOwUMGRznGAQ=="
+    }
+   },
+   "trusted": [
+    "issuer"
+   ],
+   "store": false,
+   "revocation_lists": [],
+   "steps": [
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "MID-10231",
+      "category": "4900",
+      "amount": {
+       "value": 11840,
+       "currency": "GBP"
+      },
+      "action": "pay"
+     },
+     "expect": {
+      "decision": "deny",
+      "failed": [
+       "not_expired"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "expiry: a prose date denies in both languages",
+   "signer": "issuer",
+   "mandate": {
+    "mandate": {
+     "version": "mandatekit/v0.2",
+     "spec": "AP2-draft-2026Q2",
+     "mandate_id": "m-expiry-2",
+     "subject": {
+      "agent_id": "agent-tidy",
+      "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc="
+     },
+     "issued_at": "2026-10-11T12:00:00Z",
+     "expires_at": "19 October 2026",
+     "constraints": {
+      "intent": "pay the energy bill",
+      "categories": [
+       "bank",
+       "4900"
+      ],
+      "counterparties": {
+       "harbourline": [
+        "read",
+        "submit",
+        "transfer"
+       ],
+       "MID-10231": [
+        "read",
+        "draft",
+        "pay"
+       ]
+      },
+      "max_amount": {
+       "value": 15000,
+       "currency": "GBP"
+      },
+      "actions": [
+       "read",
+       "draft",
+       "submit",
+       "pay",
+       "transfer"
+      ],
+      "approval": {
+       "actions": [
+        "submit"
+       ]
+      }
+     }
+    },
+    "signature": {
+     "alg": "Ed25519",
+     "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+     "value": "mDs+1xOxQ0YzFZ4Kt1+cz9vMoVtDKDv/AWVOdvXUgt8zVVE+mT0dQCvds+Y1X++HQ43XtuzLaxDwFon0cszeCw=="
+    }
+   },
+   "trusted": [
+    "issuer"
+   ],
+   "store": false,
+   "revocation_lists": [],
+   "steps": [
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "MID-10231",
+      "category": "4900",
+      "amount": {
+       "value": 11840,
+       "currency": "GBP"
+      },
+      "action": "pay"
+     },
+     "expect": {
+      "decision": "deny",
+      "failed": [
+       "not_expired"
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "name": "expiry: a naive instant reads as UTC in both languages",
+   "signer": "issuer",
+   "mandate": {
+    "mandate": {
+     "version": "mandatekit/v0.2",
+     "spec": "AP2-draft-2026Q2",
+     "mandate_id": "m-expiry-3",
+     "subject": {
+      "agent_id": "agent-tidy",
+      "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc="
+     },
+     "issued_at": "2026-10-11T12:00:00Z",
+     "expires_at": "2026-10-19T12:00:00",
+     "constraints": {
+      "intent": "pay the energy bill",
+      "categories": [
+       "bank",
+       "4900"
+      ],
+      "counterparties": {
+       "harbourline": [
+        "read",
+        "submit",
+        "transfer"
+       ],
+       "MID-10231": [
+        "read",
+        "draft",
+        "pay"
+       ]
+      },
+      "max_amount": {
+       "value": 15000,
+       "currency": "GBP"
+      },
+      "actions": [
+       "read",
+       "draft",
+       "submit",
+       "pay",
+       "transfer"
+      ],
+      "approval": {
+       "actions": [
+        "submit"
+       ]
+      }
+     }
+    },
+    "signature": {
+     "alg": "Ed25519",
+     "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+     "value": "A/Zf9KkXS8g+0ijYkaDvegjR71HXWHgpdAH/ya2+AZLV6pI4ooU/dgbaWSv6foZq4B9IOZ5W5Dma97UsvDzvBQ=="
+    }
+   },
+   "trusted": [
+    "issuer"
+   ],
+   "store": false,
+   "revocation_lists": [],
+   "steps": [
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "MID-10231",
+      "category": "4900",
+      "amount": {
+       "value": 11840,
+       "currency": "GBP"
+      },
+      "action": "pay"
+     },
+     "expect": {
+      "decision": "allow",
+      "failed": []
+     }
+    }
+   ]
+  },
+  {
+   "name": "expiry: a space separator and a fraction are accepted in both languages",
+   "signer": "issuer",
+   "mandate": {
+    "mandate": {
+     "version": "mandatekit/v0.2",
+     "spec": "AP2-draft-2026Q2",
+     "mandate_id": "m-expiry-4",
+     "subject": {
+      "agent_id": "agent-tidy",
+      "public_key": "Kay64UG8yvCyLhqU000LxzYeUm0L/hLIl5S8kyKWbdc="
+     },
+     "issued_at": "2026-10-11T12:00:00Z",
+     "expires_at": "2026-10-19 12:00:00.5Z",
+     "constraints": {
+      "intent": "pay the energy bill",
+      "categories": [
+       "bank",
+       "4900"
+      ],
+      "counterparties": {
+       "harbourline": [
+        "read",
+        "submit",
+        "transfer"
+       ],
+       "MID-10231": [
+        "read",
+        "draft",
+        "pay"
+       ]
+      },
+      "max_amount": {
+       "value": 15000,
+       "currency": "GBP"
+      },
+      "actions": [
+       "read",
+       "draft",
+       "submit",
+       "pay",
+       "transfer"
+      ],
+      "approval": {
+       "actions": [
+        "submit"
+       ]
+      }
+     }
+    },
+    "signature": {
+     "alg": "Ed25519",
+     "public_key": "A6EHv/POEL4dcN0Y50vAmWfk1jCbpQ1fHdyGZBJVMbg=",
+     "value": "27NiS57B888xqTD2GV5+lFKMYu1mcdFr+95VtBkwhULOj7cl7tAi9kkKjRChqubwAZRZYpiJwXvuEeQsn83RAQ=="
+    }
+   },
+   "trusted": [
+    "issuer"
+   ],
+   "store": false,
+   "revocation_lists": [],
+   "steps": [
+    {
+     "op": "verify",
+     "transaction": {
+      "merchant": "MID-10231",
+      "category": "4900",
+      "amount": {
+       "value": 11840,
+       "currency": "GBP"
+      },
+      "action": "pay"
+     },
+     "expect": {
+      "decision": "allow",
+      "failed": []
+     }
+    }
+   ]
+  }
+ ],
+ "parser_cases": [
+  {
+   "name": "the canonical example, with a bare month/day resolving to next year under the fixture clock",
+   "text": "Allow this agent to buy running shoes from any apparel retailer up to $500 per transaction, expires June 30",
+   "expect": {
+    "intent": "buy running shoes",
+    "categories": [
+     "apparel"
+    ],
+    "max_amount": {
+     "value": 500,
+     "currency": "USD"
+    },
+    "expires_at": "2027-06-30T23:59:59Z"
+   }
+  },
+  {
+   "name": "a comma where the amount should be is no amount at all (was: Python crash, TypeScript zero cap)",
+   "text": "Allow this agent to buy coffee up to , 500",
+   "expect": {
+    "intent": "buy coffee"
+   }
+  },
+  {
+   "name": "a currency symbol with no digits after it is no amount",
+   "text": "Allow this agent to buy milk under $ , dollars",
+   "expect": {
+    "intent": "buy milk"
+   }
+  },
+  {
+   "name": "thousands separators and cents",
+   "text": "Allow this agent to purchase a monitor up to $1,250.50",
+   "expect": {
+    "intent": "purchase a monitor",
+    "max_amount": {
+     "value": 1250.5,
+     "currency": "USD"
+    }
+   }
+  },
+  {
+   "name": "a currency word after the number",
+   "text": "Allow this agent to pay for lunch, max of 50 euros",
+   "expect": {
+    "intent": "pay for lunch",
+    "max_amount": {
+     "value": 50,
+     "currency": "EUR"
+    }
+   }
+  },
+  {
+   "name": "a pound cap and an ISO expiry",
+   "text": "Allow this agent to book a hotel in Lisbon, no more than \u00a375, expires 2026-12-31",
+   "expect": {
+    "intent": "book a hotel in Lisbon",
+    "max_amount": {
+     "value": 75,
+     "currency": "GBP"
+    },
+    "expires_at": "2026-12-31T23:59:59Z"
+   }
+  },
+  {
+   "name": "an allow list of three merchants separated by commas and 'and'",
+   "text": "Allow this agent to buy coffee only from Blue Bottle, Stumptown and Blank Street up to $20",
+   "expect": {
+    "intent": "buy coffee only",
+    "merchants": {
+     "allow": [
+      "Blue Bottle",
+      "Stumptown",
+      "Blank Street"
+     ],
+     "deny": []
+    },
+    "max_amount": {
+     "value": 20,
+     "currency": "USD"
+    }
+   }
+  },
+  {
+   "name": "a deny-listed merchant and a category word",
+   "text": "Allow this agent to order books, never from Amazon, expires 2026-12-31",
+   "expect": {
+    "intent": "order books",
+    "categories": [
+     "books"
+    ],
+    "merchants": {
+     "allow": [],
+     "deny": [
+      "Amazon"
+     ]
+    },
+    "expires_at": "2026-12-31T23:59:59Z"
+   }
+  },
+  {
+   "name": "a 300-character merchant run is cut at the bound, not backtracked over",
+   "text": "Allow this agent to buy pens only from AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+   "expect": {
+    "intent": "buy pens only",
+    "merchants": {
+     "allow": [
+      "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+     ],
+     "deny": []
+    }
+   }
+  },
+  {
+   "name": "an ISO-looking expiry that is not a calendar date is ignored (was: Python crash, TypeScript roll-over)",
+   "text": "Allow this agent to buy a lamp, expires 2026-13-45",
+   "expect": {
+    "intent": "buy a lamp"
+   }
+  }
+ ],
+ "iso_cases": [
+  {
+   "input": "2026-10-19T12:00:00Z",
+   "valid": true,
+   "normalized": "2026-10-19T12:00:00Z"
+  },
+  {
+   "input": "2026-10-19T12:00:00",
+   "valid": true,
+   "normalized": "2026-10-19T12:00:00Z"
+  },
+  {
+   "input": "2026-10-19 12:00:00Z",
+   "valid": true,
+   "normalized": "2026-10-19T12:00:00Z"
+  },
+  {
+   "input": "2026-10-19T12:00:00.5Z",
+   "valid": true,
+   "normalized": "2026-10-19T12:00:00Z"
+  },
+  {
+   "input": "2026-10-19T12:00:00.123456Z",
+   "valid": true,
+   "normalized": "2026-10-19T12:00:00Z"
+  },
+  {
+   "input": "2026-10-19T12:00:00+02:00",
+   "valid": true,
+   "normalized": "2026-10-19T10:00:00Z"
+  },
+  {
+   "input": "2026-10-19",
+   "valid": false,
+   "normalized": null
+  },
+  {
+   "input": "19 October 2026",
+   "valid": false,
+   "normalized": null
+  },
+  {
+   "input": "2026-10-19T12:00Z",
+   "valid": false,
+   "normalized": null
+  },
+  {
+   "input": "2026-10-19T12:00:00 Z",
+   "valid": false,
+   "normalized": null
+  },
+  {
+   "input": "2026-10-19T12:00:00+0200",
+   "valid": false,
+   "normalized": null
+  },
+  {
+   "input": "",
+   "valid": false,
+   "normalized": null
   }
  ]
 }

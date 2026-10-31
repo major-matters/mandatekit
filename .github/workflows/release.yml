@@ -1,0 +1,108 @@
+# Release for MandateKit: build both packages and publish them with Trusted Publishing
+# (OpenID Connect), so no long-lived registry token lives in this repository.
+#
+# Trigger: push a tag.
+#   vX.Y.Z      publish the npm package and the PyPI package whose version is X.Y.Z
+#   npm-vX.Y.Z  publish only the npm package
+#   py-vX.Y.Z   publish only the PyPI package
+# A job whose package version does not equal the tag's X.Y.Z skips (it does not fail),
+# so one repository can carry different npm and PyPI versions.
+#
+# Setup, once per registry (see the repository's handoff notes):
+#   PyPI: project mandatekit -> Publishing -> add a GitHub publisher with owner
+#         major-matters, repository mandatekit, workflow release.yml, environment release.
+#   npm:  package mandatekit -> Settings -> Trusted Publisher -> GitHub Actions with
+#         organization major-matters, repository mandatekit, workflow release.yml,
+#         environment release.
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+      - "npm-v*"
+      - "py-v*"
+
+permissions:
+  contents: read
+
+jobs:
+  pypi:
+    name: PyPI (mandatekit)
+    if: ${{ !startsWith(github.ref_name, 'npm-v') }}
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12"
+      - name: The tag must name the pyproject version
+        id: gate
+        working-directory: python
+        run: |
+          tag="${GITHUB_REF_NAME#npm-}"; tag="${tag#py-}"; tag="${tag#v}"
+          version=$(python -c 'import tomllib; print(tomllib.load(open("pyproject.toml", "rb"))["project"]["version"])')
+          if [ "$tag" = "$version" ]; then
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::pyproject.toml is $version and the tag is $tag; skipping PyPI"
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Build sdist and wheel
+        if: steps.gate.outputs.publish == 'true'
+        working-directory: python
+        run: |
+          pip install build
+          python -m build
+          ls -l dist
+      - name: Publish to PyPI (Trusted Publishing)
+        if: steps.gate.outputs.publish == 'true'
+        uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # v1.14.3
+        with:
+          packages-dir: python/dist/
+
+  npm:
+    name: npm (mandatekit)
+    if: ${{ !startsWith(github.ref_name, 'py-v') }}
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "22"
+          registry-url: "https://registry.npmjs.org"
+      - name: npm 11.5 or newer (Trusted Publishing needs it; Node 22 bundles npm 10)
+        run: |
+          npm install -g npm@latest
+          npm --version
+      - name: The tag must name the package.json version
+        id: gate
+        working-directory: typescript
+        run: |
+          tag="${GITHUB_REF_NAME#npm-}"; tag="${tag#py-}"; tag="${tag#v}"
+          version=$(node -p "require('./package.json').version")
+          if [ "$tag" = "$version" ]; then
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::package.json is $version and the tag is $tag; skipping npm"
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Install, build, test
+        if: steps.gate.outputs.publish == 'true'
+        working-directory: typescript
+        run: |
+          npm ci --no-audit --no-fund
+          npm run build
+          npm test
+      - name: Publish to npm (Trusted Publishing, with provenance)
+        if: steps.gate.outputs.publish == 'true'
+        working-directory: typescript
+        run: npm publish --provenance --access public

@@ -54,6 +54,14 @@ FORWARD = "forward"   # pass the original line to the server
 RESPOND = "respond"   # do not forward; send this JSON-RPC response to the client
 DROP = "drop"         # do not forward; nothing to say (unparseable, or denied notification)
 
+# A JSON-RPC frame longer than this is dropped unparsed. MCP tool calls are small; a frame
+# this size is either a bug or an attempt to exhaust the proxy.
+MAX_LINE_CHARS = 1 << 20  # 1 MiB
+
+
+def _log(message: str) -> None:
+    print(f"mandatekit-mcp: {message}", file=sys.stderr)
+
 
 def load_trusted(arg: str) -> str:
     """Resolve --trust: a base64 public key, or @path to a file containing one."""
@@ -107,9 +115,15 @@ def gate_line(
     `store` holds usage state for a mandate with `limits`; a forwarded call is
     recorded in it. `revocation_lists` carries the signed lists a mandate
     declares. `now` pins the clock (tests); the wall clock otherwise."""
+    if len(line) > MAX_LINE_CHARS:
+        _log(f"dropped a {len(line)}-character frame (limit {MAX_LINE_CHARS}); fail-closed")
+        return DROP, None
     try:
         msg = json.loads(line)
-    except (ValueError, TypeError):
+    except (ValueError, TypeError, RecursionError, MemoryError) as e:
+        # Deep nesting raises RecursionError inside json; a pathological frame can raise
+        # MemoryError. Neither may take the proxy down: the frame is dropped, nothing forwards.
+        _log(f"dropped an unparseable frame ({e.__class__.__name__}); fail-closed")
         return DROP, None
     if not isinstance(msg, dict):
         return DROP, None

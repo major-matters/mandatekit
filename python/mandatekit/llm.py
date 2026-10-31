@@ -14,10 +14,11 @@ Requires `anthropic` installed and ANTHROPIC_API_KEY set. The import of
 `anthropic` is lazy so the rest of MandateKit stays dependency-free.
 """
 
+import re
 import json
 import os
 from datetime import datetime, timezone
-from typing import Dict
+from typing import Dict, Optional
 
 from .mandate import parse_iso
 
@@ -61,6 +62,24 @@ def _extract_json(raw: str) -> Dict:
     return json.loads(raw)
 
 
+def _expiry_from_model(raw) -> Optional[datetime]:
+    """A model may answer with a bare date; read it as the end of that day in UTC, as the
+    rule-based parser does for "expires 2026-06-30". Anything else must be a strict
+    ISO-8601 instant (parse_iso); otherwise the expiry is dropped and the TTL applies."""
+    if not isinstance(raw, str):
+        return None
+    try:
+        return parse_iso(raw)
+    except ValueError:
+        pass
+    if re.fullmatch(r"\d{4}-\d{2}-\d{2}", raw):
+        try:
+            return datetime.fromisoformat(raw).replace(hour=23, minute=59, second=59, tzinfo=timezone.utc)
+        except ValueError:
+            return None
+    return None
+
+
 def _constraints_from_data(data: Dict) -> Dict:
     """Map a parsed JSON object to the constraints dict `rule_based_parser` returns."""
     out: Dict = {}
@@ -68,10 +87,9 @@ def _constraints_from_data(data: Dict) -> Dict:
         if data.get(key):
             out[key] = data[key]
     if data.get("expires_at"):
-        try:
-            out["expires_at"] = parse_iso(data["expires_at"])
-        except Exception:
-            pass
+        out_dt = _expiry_from_model(data["expires_at"])
+        if out_dt is not None:
+            out["expires_at"] = out_dt
     return out
 
 

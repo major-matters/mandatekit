@@ -35,7 +35,8 @@ from mandatekit import (
     verify_revocation_list_signature,
     verify_signature,
 )
-from mandatekit.mandate import iso
+from mandatekit.compiler import rule_based_parser
+from mandatekit.mandate import iso, parse_iso
 from mandatekit.signing import _b64, _public_from_seed
 
 OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "verdict-matrix.json")
@@ -43,6 +44,15 @@ OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "verdict-matrix.j
 NOW = datetime(2026, 10, 12, 12, 0, 0, tzinfo=timezone.utc)
 ISSUED = NOW - timedelta(days=1)
 EXPIRES = NOW + timedelta(days=7)
+
+# Every envelope in the fixture must be reproducible byte for byte, so no wall-clock value
+# may reach one. delegate_mandate defaults issued_at to now(); pin it here (2026-10-31).
+_delegate_mandate = delegate_mandate
+
+
+def delegate_mandate(parent, **kw):  # noqa: F811 - deliberate shadowing of the import
+    kw.setdefault("issued_at", ISSUED)
+    return _delegate_mandate(parent, **kw)
 
 SEEDS = {
     "issuer": bytes(range(32)),
@@ -557,6 +567,98 @@ case("anchor: actions alone are not scope", unbounded, [
 ])
 
 
+# --- expiry strings: one strict ISO-8601 grammar in both SDKs (audit 2026-10-31, L4) ----------
+# The Python verifier used datetime.fromisoformat unguarded, which accepts a bare date (and, on
+# 3.11+, more besides) that the TypeScript verifier rejects. Same verdict in both now.
+
+def with_expiry(raw, n=[0]):
+    n[0] += 1
+    m = copy.deepcopy(root(mandate_id=f"m-expiry-{n[0]}"))  # fixed id: the fixture must be reproducible
+    m["expires_at"] = raw
+    return signed(m)
+
+
+case("expiry: a date-only expires_at is not an instant and denies in both languages",
+     with_expiry("2026-10-19"), [V(PAY_THAMES, "deny", ["not_expired"])])
+case("expiry: a prose date denies in both languages",
+     with_expiry("19 October 2026"), [V(PAY_THAMES, "deny", ["not_expired"])])
+case("expiry: a naive instant reads as UTC in both languages",
+     with_expiry("2026-10-19T12:00:00"), [V(PAY_THAMES, "allow", [])])
+case("expiry: a space separator and a fraction are accepted in both languages",
+     with_expiry("2026-10-19 12:00:00.5Z"), [V(PAY_THAMES, "allow", [])])
+
+
+# --- rule-based parser cases: both compilers parse the same text the same way ----------------
+# Expectations are the constraints dict (expires_at as an ISO string) for the fixture clock.
+# Added for the audit of 2026-10-31 (M3): bounded regexes in both ports, and an amount must
+# start with a digit, so "up to , 500" neither crashes Python nor yields a zero cap in TS.
+
+def P(name, text, **expect):
+    return {"name": name, "text": text, "expect": expect}
+
+
+A200 = "A" * 300  # the merchant run is cut at the 200-character bound (201 with the lead letter)
+
+PARSER_CASES = [
+    P("the canonical example, with a bare month/day resolving to next year under the fixture clock",
+      "Allow this agent to buy running shoes from any apparel retailer up to $500 per transaction, expires June 30",
+      intent="buy running shoes", categories=["apparel"], max_amount={"value": 500, "currency": "USD"},
+      expires_at="2027-06-30T23:59:59Z"),
+    P("a comma where the amount should be is no amount at all (was: Python crash, TypeScript zero cap)",
+      "Allow this agent to buy coffee up to , 500",
+      intent="buy coffee"),
+    P("a currency symbol with no digits after it is no amount",
+      "Allow this agent to buy milk under $ , dollars",
+      intent="buy milk"),
+    P("thousands separators and cents",
+      "Allow this agent to purchase a monitor up to $1,250.50",
+      intent="purchase a monitor", max_amount={"value": 1250.5, "currency": "USD"}),
+    P("a currency word after the number",
+      "Allow this agent to pay for lunch, max of 50 euros",
+      intent="pay for lunch", max_amount={"value": 50, "currency": "EUR"}),
+    P("a pound cap and an ISO expiry",
+      "Allow this agent to book a hotel in Lisbon, no more than £75, expires 2026-12-31",
+      intent="book a hotel in Lisbon", max_amount={"value": 75, "currency": "GBP"},
+      expires_at="2026-12-31T23:59:59Z"),
+    P("an allow list of three merchants separated by commas and 'and'",
+      "Allow this agent to buy coffee only from Blue Bottle, Stumptown and Blank Street up to $20",
+      intent="buy coffee only", merchants={"allow": ["Blue Bottle", "Stumptown", "Blank Street"], "deny": []},
+      max_amount={"value": 20, "currency": "USD"}),
+    P("a deny-listed merchant and a category word",
+      "Allow this agent to order books, never from Amazon, expires 2026-12-31",
+      intent="order books", categories=["books"], merchants={"allow": [], "deny": ["Amazon"]},
+      expires_at="2026-12-31T23:59:59Z"),
+    P("a 300-character merchant run is cut at the bound, not backtracked over",
+      "Allow this agent to buy pens only from " + A200,
+      intent="buy pens only", merchants={"allow": ["A" * 201], "deny": []}),
+    P("an ISO-looking expiry that is not a calendar date is ignored (was: Python crash, TypeScript roll-over)",
+      "Allow this agent to buy a lamp, expires 2026-13-45",
+      intent="buy a lamp"),
+]
+
+
+# --- ISO-8601 instants: what both verifiers accept and reject ----------------------------------
+
+def I(text, normalized=None):
+    return {"input": text, "valid": normalized is not None, "normalized": normalized}
+
+
+ISO_CASES = [
+    I("2026-10-19T12:00:00Z", "2026-10-19T12:00:00Z"),
+    I("2026-10-19T12:00:00", "2026-10-19T12:00:00Z"),          # naive reads as UTC
+    I("2026-10-19 12:00:00Z", "2026-10-19T12:00:00Z"),         # space separator
+    I("2026-10-19T12:00:00.5Z", "2026-10-19T12:00:00Z"),       # fraction, any length
+    I("2026-10-19T12:00:00.123456Z", "2026-10-19T12:00:00Z"),
+    I("2026-10-19T12:00:00+02:00", "2026-10-19T10:00:00Z"),    # offset applied
+    I("2026-10-19"),                  # date only
+    I("19 October 2026"),             # prose
+    I("2026-10-19T12:00Z"),           # no seconds
+    I("2026-10-19T12:00:00 Z"),       # space before Z
+    I("2026-10-19T12:00:00+0200"),    # offset without a colon
+    I(""),
+]
+
+
 # --- self-check against the Python verifier, then write ---------------------------------------
 
 def run_case(c):
@@ -585,8 +687,30 @@ def run_case(c):
     return verdicts
 
 
+def check_parser_cases():
+    for c in PARSER_CASES:
+        got = rule_based_parser(c["text"], now=NOW)
+        if "expires_at" in got:
+            got["expires_at"] = iso(got["expires_at"])
+        assert got == c["expect"], f"parser case {c['name']!r}:\n  got      {got}\n  expected {c['expect']}"
+
+
+def check_iso_cases():
+    for c in ISO_CASES:
+        if c["valid"]:
+            assert iso(parse_iso(c["input"])) == c["normalized"], c["input"]
+        else:
+            try:
+                parse_iso(c["input"])
+            except ValueError:
+                continue
+            raise AssertionError(f"parse_iso accepted {c['input']!r}")
+
+
 def main():
     total = sum(run_case(c) for c in CASES)
+    check_parser_cases()
+    check_iso_cases()
     fixture = {
         "description": (
             "MandateKit 0.2 verdict matrix. Both test suites (python/tests/test_v02.py and "
@@ -596,18 +720,23 @@ def main():
             "`signature_valid` where given). Envelopes were signed by the Python SDK; the TypeScript "
             "suite re-signs each one with the same seed and checks the bytes match. Every step carries "
             "an explicit `now` or uses the fixture's; nothing depends on a wall clock. Seeds are test "
-            "values, never real keys."
+            "values, never real keys. `parser_cases` replay the rule-based compiler on the same "
+            "text (expires_at as an ISO string, resolved against `now`) and `iso_cases` list the "
+            "ISO-8601 strings both verifiers accept (with the normalized instant) or reject."
         ),
         "generated_by": "fixtures/generate_verdict_matrix.py",
         "now": iso(NOW),
         "seeds": {k: v.hex() for k, v in SEEDS.items()},
         "keys": KEYS,
         "cases": CASES,
+        "parser_cases": PARSER_CASES,
+        "iso_cases": ISO_CASES,
     }
     with open(OUT, "w") as fh:
         json.dump(fixture, fh, indent=1)
         fh.write("\n")
-    print(f"wrote {OUT}: {len(CASES)} cases, {total} verdicts, all as expected")
+    print(f"wrote {OUT}: {len(CASES)} cases, {total} verdicts, {len(PARSER_CASES)} parser cases, "
+          f"{len(ISO_CASES)} ISO cases, all as expected")
 
 
 if __name__ == "__main__":

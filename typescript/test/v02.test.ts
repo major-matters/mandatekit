@@ -38,6 +38,9 @@ import {
   type VerifyOptions,
 } from "../src/index.ts";
 import { __version__ as pkgVersion } from "../src/index.ts";
+import { ruleBasedParser } from "../src/compiler.ts";
+import { iso } from "../src/mandate.ts";
+import { parseIsoStrict } from "../src/verifier.ts";
 import pkg from "../package.json" with { type: "json" };
 
 const FIXTURE = new URL("../../fixtures/verdict-matrix.json", import.meta.url);
@@ -81,8 +84,8 @@ const codes = (v: ReturnType<typeof verify>) => v.failed.map((c) => c.constraint
 // --- versions, builders, validation -----------------------------------------------
 
 test("versions are aligned", () => {
-  assert.equal(pkgVersion, "0.2.0");
-  assert.equal(pkg.version, "0.2.0");
+  assert.equal(pkgVersion, "0.2.1");
+  assert.equal(pkg.version, "0.2.1");
   assert.equal(VERSION, "mandatekit/v0.2");
   assert.deepEqual([...SUPPORTED_VERSIONS], ["mandatekit/v0", "mandatekit/v0.2"]);
   assert.equal(new Set(REASON_CODES).size, REASON_CODES.length);
@@ -556,4 +559,28 @@ for (const c of fixture.cases) {
 test("the fixture exercised enough verdicts and only documented reason codes", () => {
   assert.ok(fixtureVerdicts >= 100, `only ${fixtureVerdicts} fixture verdicts ran`);
   for (const code of emitted) assert.ok(REASON_CODES.includes(code), `undocumented reason code ${code}`);
+});
+
+// Audit 2026-10-31. The fixture also carries the rule-based compiler's cases (M3) and the
+// ISO-8601 strings both verifiers must accept or reject alike (L4).
+interface ParserCase { name: string; text: string; expect: Record<string, unknown> }
+interface IsoCase { input: string; valid: boolean; normalized: string | null }
+const extra = fixture as unknown as { parser_cases: ParserCase[]; iso_cases: IsoCase[] };
+
+test("fixture: the rule-based parser reads every parser case as the Python compiler does", () => {
+  assert.ok(extra.parser_cases.length > 0, "fixture has no parser cases");
+  for (const c of extra.parser_cases) {
+    const got: Record<string, unknown> = { ...ruleBasedParser(c.text, defaultNow) };
+    if (got.expires_at instanceof Date) got.expires_at = iso(got.expires_at);
+    assert.deepEqual(got, c.expect, c.name);
+  }
+});
+
+test("fixture: the strict ISO-8601 parser accepts and rejects the same strings as Python", () => {
+  assert.ok(extra.iso_cases.length > 0, "fixture has no ISO cases");
+  for (const c of extra.iso_cases) {
+    const ms = parseIsoStrict(c.input);
+    if (c.valid) assert.equal(iso(new Date(ms)), c.normalized, c.input);
+    else assert.ok(Number.isNaN(ms), `accepted ${JSON.stringify(c.input)}`);
+  }
 });
